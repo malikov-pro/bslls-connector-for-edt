@@ -63,39 +63,48 @@ public class BSLValidator implements IExternalBslValidator {
 		.getFile(new Path(EcoreUtil.getURI(module).toPlatformString(true)));
 	var uri = BSLCommon.uri(moduleFile.getLocationURI());
 
+	var alreadyOpened = plugin.getWorkbenchParts().contains(uri.toString());
+
 	// Костыль при открытии, если на форме нет фокуса
-	if (plugin.getWorkbenchParts().contains(uri.toString())) {
+	if (alreadyOpened) {
 	    connector.textDocumentDidChange(uri, content);
 	} else {
 	    plugin.getWorkbenchParts().add(uri.toString());
 	    connector.textDocumentDidOpen(uri, content);
 	}
 
-	// FIXME: иначе может быть NPE
-	plugin.sleepCurrentThread(1000);
-	// попытка прервать
-	if (monitor.isCanceled()) {
-	    return;
-	}
-	// если документ уже закрыт
-	if (!plugin.getWorkbenchParts().contains(uri.toString())) {
-	    return;
-	}
-
-	var diagnostics = connector.diagnostics(uri.toString());
-
-	// попытка прервать
-	if (monitor.isCanceled()) {
-	    return;
-	}
-
-	diagnostics.forEach(diagnostic -> {
+	try {
+	    // FIXME: иначе может быть NPE
+	    plugin.sleepCurrentThread(1000);
 	    // попытка прервать
 	    if (monitor.isCanceled()) {
 		return;
 	    }
-	    acceptIssue(module, messageAcceptor, diagnostic, document);
-	});
+	    // если документ уже закрыт
+	    if (!plugin.getWorkbenchParts().contains(uri.toString())) {
+		return;
+	    }
+
+	    var diagnostics = connector.diagnostics(uri.toString());
+
+	    // попытка прервать
+	    if (monitor.isCanceled()) {
+		return;
+	    }
+
+	    diagnostics.forEach(diagnostic -> {
+		// попытка прервать
+		if (monitor.isCanceled()) {
+		    return;
+		}
+		acceptIssue(module, messageAcceptor, diagnostic, document);
+	    });
+	} finally {
+	    if (!alreadyOpened && plugin.getWorkbenchParts().contains(uri.toString())) {
+		plugin.getWorkbenchParts().remove(uri.toString());
+		connector.textDocumentDidClose(uri);
+	    }
+	}
     }
 
     private void acceptIssue(Module module, CustomValidationMessageAcceptor messageAcceptor, Diagnostic diagnostic,
