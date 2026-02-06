@@ -2,7 +2,6 @@ package com.github.otymko.dt.bsl.lsconnector.lsp;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,13 +18,14 @@ import org.eclipse.lsp4j.CodeActionKind;
 import org.eclipse.lsp4j.CodeActionKindCapabilities;
 import org.eclipse.lsp4j.CodeActionLiteralSupportCapabilities;
 import org.eclipse.lsp4j.Diagnostic;
+import org.eclipse.lsp4j.DiagnosticCapabilities;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.DocumentDiagnosticParams;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4j.InitializeResult;
-import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
@@ -37,19 +37,11 @@ import org.eclipse.lsp4j.services.LanguageServer;
 
 import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 
 public class BSLConnector {
     private static final int DEFAULT_TIMEOUT = 10;
     private static final int DEFAULT_SMALL_TIMEOUT = 2;
     private static final String LAUNCHER_NAME = "BSLLanguageLauncher";
-    private static final Gson GSON = new Gson();
-    @SuppressWarnings("serial")
-    private static final Type LIST_DIAGNOSTIC_TYPE = new TypeToken<List<Diagnostic>>() {
-    }.getType();
 
     private BSLLanguageClient client;
     private LanguageServer server;
@@ -85,6 +77,7 @@ public class BSLConnector {
 	textDocument.setCodeAction(codeActionCapabilities);
 	textDocument.setCodeAction(new CodeActionCapabilities(new CodeActionLiteralSupportCapabilities(
 		new CodeActionKindCapabilities(Arrays.asList("", CodeActionKind.QuickFix))), false));
+	textDocument.setDiagnostic(new DiagnosticCapabilities());
 	serverCapabilities.setTextDocument(textDocument);
 
 	params.setCapabilities(serverCapabilities);
@@ -140,10 +133,17 @@ public class BSLConnector {
 
     public List<Diagnostic> diagnostics(String uri) {
 	var textDocument = new TextDocumentIdentifier(uri);
-	Range range = null;
-	var params = new DiagnosticParams(textDocument, range);
-	var result = launcher.getRemoteEndpoint().request("textDocument/x-diagnostics", params);
-	return getDiagnosticFromFuture(result);
+	var params = new DocumentDiagnosticParams(textDocument);
+	try {
+	    var report = server.getTextDocumentService().diagnostic(params)
+		    .get(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
+	    if (report.isLeft()) {
+		return report.getLeft().getItems();
+	    }
+	} catch (Exception e) {
+	    BSLPlugin.createErrorStatus(e.getMessage(), e);
+	}
+	return Collections.emptyList();
     }
     
     public void runFutureTask(Runnable runnable) {
@@ -176,23 +176,5 @@ public class BSLConnector {
 		BSLPlugin.createErrorStatus(e.getMessage(), e);
 	    }
 	}
-    }
-
-    // TODO: перевести на lsp4j
-    private List<Diagnostic> getDiagnosticFromFuture(CompletableFuture<Object> future) {
-	JsonObject response;
-	JsonArray array = null;
-
-	try {
-	    response = (JsonObject) future.get(DEFAULT_TIMEOUT, TimeUnit.SECONDS);
-	    array = (JsonArray) response.get("diagnostics");
-	} catch (Exception e) {
-	    BSLPlugin.createErrorStatus(e.getMessage(), e);
-	}
-
-	if (array != null) {
-	    return GSON.fromJson(array, LIST_DIAGNOSTIC_TYPE);
-	}
-	return Collections.emptyList();
     }
 }
