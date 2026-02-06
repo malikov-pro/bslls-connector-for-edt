@@ -13,7 +13,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.text,
  org.eclipse.ui,
  org.eclipse.xtext.ui,
- com.github.1c-syntax.utils;bundle-version="0.3.1",
+ com.github.1c-syntax.utils,
  org.eclipse.lsp4j.jsonrpc
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: com.github.otymko.dt.bsl.lspconnector

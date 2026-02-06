@@ -3,5 +3,6 @@
    <feature id="com.github.otymko.dt.bsl.lsconnector">
       <category name="com.github.otymko.dt.bsl.lsconnector.plugin.category.public"/>
    </feature>
+   <bundle id="com.github.1c-syntax.utils"/>
    <category-def name="com.github.otymko.dt.bsl.lsconnector.plugin.category.public" label="1C: Enterprise Development Tools Plugin"/>
 </site>

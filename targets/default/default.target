@@ -32,9 +32,20 @@
 </location>
 
 <!-- 1C-syntax utils -->
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<repository location="https://otymko.github.io/edt-p2-registry/update/utils/v0.3.1/"/>
-<unit id="com.github.1c-syntax.utils" version="0.3.1"/>
+<location includeDependencyDepth="none" includeDependencyScopes="compile" missingManifest="generate" type="Maven">
+<dependencies>
+<dependency>
+<groupId>io.github.1c-syntax</groupId>
+<artifactId>utils</artifactId>
+<version>0.6.9</version>
+<type>jar</type>
+</dependency>
+</dependencies>
+<instructions><![CDATA[
+Bundle-SymbolicName: com.github.1c-syntax.utils
+Bundle-Name: 1C-syntax Utils
+Export-Package: com.github._1c_syntax.utils
+]]></instructions>
 </location>
 
 <!-- Lombok -->
