@@ -22,7 +22,7 @@
 
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.license.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/cbi/updates/license/2.0.2.v20181016-2210"/>
+<repository location="https://download.eclipse.org/cbi/updates/license/2.0.2.v20181016-2210"/>
 </location>
 
 <!-- LSP4J -->
@@ -49,9 +49,21 @@ Export-Package: com.github._1c_syntax.utils
 </location>
 
 <!-- Lombok -->
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<repository location="https://otymko.github.io/edt-p2-registry/update/lombok/1.18.16/"/>
-<unit id="org.projectlombok.lombok" version="1.18.16"/>
+<location includeDependencyDepth="none" includeDependencyScopes="compile" missingManifest="generate" type="Maven">
+<dependencies>
+<dependency>
+<groupId>org.projectlombok</groupId>
+<artifactId>lombok</artifactId>
+<version>1.18.30</version>
+<type>jar</type>
+</dependency>
+</dependencies>
+<instructions><![CDATA[
+Bundle-SymbolicName: org.projectlombok.lombok
+Bundle-Name: Lombok
+Export-Package: lombok,lombok.experimental
+Import-Package: !com.sun.*,!sun.*,!jdk.*,*;resolution:=optional
+]]></instructions>
 </location>
 
 </locations>
