@@ -17,7 +17,7 @@
 https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
 ```
 3. Нажмите `Добавить`.
-4. Установите флажок на `BSL LS connector for EDT` и `LSP4J SDK`.
+4. Установите флажок на `BSL LS connector for EDT`.
 5. Убедитесь, что установлен фложок `Обращаться во время инсталяции ко всем сайтам обновления для поиска требуемого ПО`.
 6. Нажмите `Далее` -> `Готово`.
 7. Перезапустите 1С:EDT.
@@ -50,37 +50,40 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 ## Разработчикам
 
-Для разработки требуется:
-* Java 11
-* Eclipse for Committer 2020-06 / 2020-09
-* Плагин lombok (https://projectlombok.org/setup/eclipse)
+### Требования
 
-### Локальная сборка плагина на Windows
+* JDK 17+
+* Maven 3.9+
+* Доступ к репозиторию EDT (credentials в `bom/settings.xml`)
+* Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
 
-> `tycho-compiler-plugin` не умеет обрабатывать аннотации `lombok` и дополнять байт-код вне приложения `eclipse` (там свой java-agent).
-> Поэтому нужно вручную переопределить `javaagent`-а для корректной сборки проекта.
-> Ниже сборка простым заявленным путем от вендора `lombok`.
+### Локальная сборка
 
-1. Очистите переменную среды `MAVEN_OPTS` от `javaagent` (пункт 3)
+> `tycho-compiler-plugin` не умеет обрабатывать аннотации `lombok` вне Eclipse IDE,
+> поэтому `lombok.jar` подключается как `-javaagent` через `MAVEN_OPTS`.
 
-```
-set MAVEN_OPTS=
-```
+#### Linux / macOS
 
-2. Скачайте `lombok`:
+```bash
+# 1. Скачайте lombok
+export MAVEN_OPTS="-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0"
+mvn dependency:copy@get-lombok -pl bundles/com.github.otymko.dt.bsl.lspconnector
 
-```
-mvn clean dependency:copy@get-lombok
-```
-
-3. Назначьте `javaagent` в переменную окружения
-
-```
-set MAVEN_OPTS=-javaagent:target/lombok.jar=ECJ
+# 2. Соберите проект
+export MAVEN_OPTS="-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -javaagent:$(pwd)/bundles/com.github.otymko.dt.bsl.lspconnector/target/lombok.jar=ECJ"
+mvn verify -Dtycho.localArtifacts=ignore
 ```
 
-4. Проверьте и соберите проект
+#### Windows
 
+```bat
+rem 1. Скачайте lombok
+set MAVEN_OPTS=-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0
+mvn dependency:copy@get-lombok -pl bundles/com.github.otymko.dt.bsl.lspconnector
+
+rem 2. Соберите проект
+set MAVEN_OPTS=-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -javaagent:%cd%\bundles\com.github.otymko.dt.bsl.lspconnector\target\lombok.jar=ECJ
+mvn verify -Dtycho.localArtifacts=ignore
 ```
-mvn verify -PSDK,find-bugs -Dtycho.localArtifacts=ignore
-```
+
+Результат сборки — p2-репозиторий в `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/`.
