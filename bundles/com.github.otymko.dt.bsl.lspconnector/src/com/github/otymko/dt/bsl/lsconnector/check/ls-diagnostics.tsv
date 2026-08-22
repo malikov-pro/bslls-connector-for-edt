@@ -96,7 +96,7 @@ MissingCommonModuleMethod	Обращение к отсутствующему м�
 MissingEventSubscriptionHandler	Отсутствует обработчик подписки на событие	error	blocker
 MissingParameterDescription	Отсутствует описание параметров метода	smell	major
 MissingReturnedValueDescription	Отсутствует описание возвращаемого значения функции	smell	major
-MissingSpace	Пропущены пробелы слева или справа от операторов`+ - * / = % < > <> <= >=`, от ключевых слов, а так же справа от`,`и`;`	smell	trivial
+MissingSpace	Пропущены пробелы слева или справа от операторов `+ - * / = % < > <> <= >=`, от ключевых слов, а так же справа от `,` и `;`	smell	trivial
 MissingTemporaryFileDeletion	Отсутствует удаление временного файла после использования	error	major
 MissingTempStorageDeletion	Отсутствует удаление данных из временного хранилища после использования	smell	critical
 MissingVariablesDescription	Все объявления переменных должны иметь описание	smell	minor

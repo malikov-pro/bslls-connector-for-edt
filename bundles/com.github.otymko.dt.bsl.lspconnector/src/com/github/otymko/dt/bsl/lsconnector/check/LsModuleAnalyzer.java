@@ -13,7 +13,9 @@ import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.xtext.nodemodel.INode;
 import org.eclipse.xtext.nodemodel.util.NodeModelUtils;
 
+import com._1c.g5.v8.dt.bsl.model.Method;
 import com._1c.g5.v8.dt.bsl.model.Module;
+import com._1c.g5.v8.dt.bsl.model.Statement;
 import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
 
@@ -39,7 +41,7 @@ public final class LsModuleAnalyzer {
 
     private List<Diagnostic> diagnostics(Module module, String content, IProgressMonitor progressMonitor) {
 	var plugin = BSLPlugin.getPlugin();
-	if (plugin == null || !plugin.isRunningLS()) {
+	if (plugin == null || !plugin.getLsService().ensureStarted()) {
 	    return List.of();
 	}
 	var connector = plugin.getLsService().getConnector();
@@ -68,13 +70,11 @@ public final class LsModuleAnalyzer {
 	plugin.getStatusService().beginBusy();
 	try {
 	    plugin.sleepCurrentThread(1000);
-	    List<Diagnostic> diagnostics = List.of();
-	    if (!progressMonitor.isCanceled() && plugin.getWorkbenchParts().contains(uri.toString())) {
-		var found = connector.diagnostics(uri.toString());
-		if (found != null) {
-		    diagnostics = found;
-		}
+	    if (progressMonitor.isCanceled() || !plugin.getWorkbenchParts().contains(uri.toString())) {
+		return List.of();
 	    }
+	    var found = connector.diagnostics(uri.toString());
+	    var diagnostics = found == null ? List.<Diagnostic>of() : found;
 	    synchronized (lock) {
 		cacheKey = key;
 		cache = List.copyOf(diagnostics);
@@ -123,16 +123,78 @@ public final class LsModuleAnalyzer {
 	}
 
 	public EObject findCauser(int offset) {
+	    var semantic = semanticAt(offset);
+	    var statement = enclosingStatement(semantic);
+	    if (statement != null) {
+		return statement;
+	    }
+	    var next = firstObjectAtOrAfter(offset);
+	    statement = enclosingStatement(next);
+	    if (statement != null) {
+		return statement;
+	    }
+	    if (semantic != null && !(semantic instanceof Module)) {
+		return semantic;
+	    }
+	    if (next != null) {
+		return next;
+	    }
+	    var method = enclosingMethod(semantic);
+	    return method != null ? method : module;
+	}
+
+	private EObject enclosingMethod(EObject object) {
+	    var current = object;
+	    while (current != null && !(current instanceof Module)) {
+		if (current instanceof Method) {
+		    return current;
+		}
+		current = current.eContainer();
+	    }
+	    return null;
+	}
+
+	private EObject semanticAt(int offset) {
 	    var root = NodeModelUtils.findActualNodeFor(module);
 	    if (root == null) {
 		return module;
 	    }
-	    INode leaf = NodeModelUtils.findLeafNodeAtOffset(root, offset);
+	    INode leaf = NodeModelUtils.findLeafNodeAtOffset(root, Math.max(offset, 0));
 	    if (leaf == null) {
 		return module;
 	    }
 	    var semantic = NodeModelUtils.findActualSemanticObjectFor(leaf);
 	    return semantic == null ? module : semantic;
+	}
+
+	private EObject enclosingStatement(EObject object) {
+	    var current = object;
+	    while (current != null && !(current instanceof Module)) {
+		if (current instanceof Statement) {
+		    return current;
+		}
+		current = current.eContainer();
+	    }
+	    return null;
+	}
+
+	private EObject firstObjectAtOrAfter(int offset) {
+	    EObject best = null;
+	    int bestStart = Integer.MAX_VALUE;
+	    var iterator = module.eAllContents();
+	    while (iterator.hasNext()) {
+		var object = iterator.next();
+		var node = NodeModelUtils.findActualNodeFor(object);
+		if (node == null) {
+		    continue;
+		}
+		int start = node.getOffset();
+		if (start >= offset && start < bestStart) {
+		    best = object;
+		    bestStart = start;
+		}
+	    }
+	    return best;
 	}
 
 	public List<Diagnostic> forCode(String code) {

@@ -37,6 +37,6 @@ public final class LsDiagnosticInfo {
     }
 
     public String getDescription() {
-	return title + ". Документация: " + getV8stdUrl();
+	return title + " (" + code + ")";
     }
 }

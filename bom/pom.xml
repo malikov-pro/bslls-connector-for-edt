@@ -25,8 +25,9 @@
     <maven.compiler.target>17</maven.compiler.target>
     <maven.compiler.release>17</maven.compiler.release>
 
-    <maven.build.timestamp.format>'v'yyyyMMdd-HHmm</maven.build.timestamp.format>
+    <maven.build.timestamp.format>'v'yyyyMMddHHmmss</maven.build.timestamp.format>
     <qualifier>${maven.build.timestamp}</qualifier>
+    <forceContextQualifier>${maven.build.timestamp}</forceContextQualifier>
 
     <tycho.localArtifacts>ignore</tycho.localArtifacts>
     <tycho.resolver.classic>false</tycho.resolver.classic>
@@ -66,6 +67,11 @@
                 <requirement>
                   <type>eclipse-plugin</type>
                   <id>javax.annotation</id>
+                  <versionRange>0.0.0</versionRange>
+                </requirement>
+                <requirement>
+                  <type>eclipse-plugin</type>
+                  <id>com._1c.g5.wiring</id>
                   <versionRange>0.0.0</versionRange>
                 </requirement>
               </extraRequirements>
@@ -138,7 +144,8 @@
           <artifactId>tycho-packaging-plugin</artifactId>
           <version>${tycho.version}</version>
           <configuration>
-            <format>'v'yyyyMMddHHmm</format>
+            <format>'v'yyyyMMddHHmmss</format>
+            <forceContextQualifier>${maven.build.timestamp}</forceContextQualifier>
           </configuration>
         </plugin>
         <plugin>

@@ -1,0 +1,4 @@
+[submodule "third_party/v8std"]
+	path = third_party/v8std
+	url = https://github.com/zeegin/v8std.git
+	branch = main

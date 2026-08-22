@@ -11,12 +11,14 @@ public class OpenEditorTrigger implements IPartListener2 {
 
     @Override
     public void partActivated(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
 	var plugin = BSLPlugin.getPlugin();
 	if (plugin.isRunningLS()) {
 	    return;
 	}
-
-	var part = partRef.getPart(true);
 	if (part instanceof BslXtextEditor) {
 	    var editorPart = (BslXtextEditor) part;
 	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());
@@ -30,10 +32,13 @@ public class OpenEditorTrigger implements IPartListener2 {
 
     @Override
     public void partClosed(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.detach((BslXtextEditor) part);
+	}
 	if (!BSLPlugin.getPlugin().isRunningLS()) {
 	    return;
 	}
-	var part = partRef.getPart(true);
 	if (part instanceof BslXtextEditor) {
 	    var editorPart = (BslXtextEditor) part;
 	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());
@@ -45,10 +50,13 @@ public class OpenEditorTrigger implements IPartListener2 {
 
     @Override
     public void partOpened(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
 	if (!BSLPlugin.getPlugin().isRunningLS()) {
 	    return;
 	}
-	var part = partRef.getPart(true);
 	if (part instanceof BslXtextEditor) {
 	    var editorPart = (BslXtextEditor) part;
 	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());

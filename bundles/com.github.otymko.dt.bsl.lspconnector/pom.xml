@@ -16,6 +16,7 @@
 
   <properties>
     <lombok.version>1.18.30</lombok.version>
+    <skip.v8std>true</skip.v8std>
   </properties>
 
   <dependencies>
@@ -59,6 +60,45 @@
         <groupId>org.eclipse.tycho</groupId>
         <artifactId>tycho-compiler-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>generate-ls-checks</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.v8std}</skip>
+              <executable>python3</executable>
+              <workingDirectory>${project.basedir}/../..</workingDirectory>
+              <arguments>
+                <argument>${project.basedir}/../../scripts/generate-ls-checks.py</argument>
+                <argument>--offline</argument>
+                <argument>--v8std-dir</argument>
+                <argument>${project.basedir}/../../third_party/v8std</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>generate-checks</id>
+      <activation>
+        <file>
+          <exists>${project.basedir}/../../third_party/v8std/docs/diagnostics/bslls</exists>
+        </file>
+      </activation>
+      <properties>
+        <skip.v8std>false</skip.v8std>
+      </properties>
+    </profile>
+  </profiles>
 </project>

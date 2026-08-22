@@ -7,13 +7,16 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * EDT пишет {@code //@skip-check <id>}. Для BSL LS id — ключ диагностики
- * ({@code LineLength}) или {@code bsl-ls} на все диагностики сервера.
+ * Подавление BSL LS — только регионы
+ * {@code // BSLLS:LineLength-off} … {@code // BSLLS:LineLength-on}
+ * или {@code // BSLLS:off} … {@code // BSLLS:on}.
+ * {@code //@skip-check} относится к проверкам EDT и BSL не глушит.
  */
 public final class LsSkipCheck {
     public static final String ALL_LS = "bsl-ls";
 
     private static final Pattern SKIP = Pattern.compile("(?i)//\\s*@skip-check\\s+([^\\r\\n]+)");
+    private static final Pattern BSLLS_TOGGLE = Pattern.compile("(?i)//\\s*BSLLS:(?:(\\w+)-)?(off|on)\\b");
 
     private LsSkipCheck() {
     }
@@ -23,29 +26,10 @@ public final class LsSkipCheck {
 	    return false;
 	}
 	var lines = content.split("\n", -1);
-	if (isSkipped(collectIds(firstNonEmptyLines(lines, 8)), checkId)) {
-	    return true;
-	}
 	if (lineNumber1Based < 1 || lineNumber1Based > lines.length) {
 	    return false;
 	}
-	int index = lineNumber1Based - 1;
-	if (isSkipped(collectIds(lines[index]), checkId)) {
-	    return true;
-	}
-	for (int i = index - 1; i >= 0; i--) {
-	    var line = lines[i];
-	    if (line.isBlank()) {
-		continue;
-	    }
-	    if (!isCommentLine(line)) {
-		break;
-	    }
-	    if (isSkipped(collectIds(line), checkId)) {
-		return true;
-	    }
-	}
-	return false;
+	return isInsideBsllsOff(lines, lineNumber1Based - 1, checkId);
     }
 
     public static boolean isSkipped(Set<String> ids, String checkId) {
@@ -55,50 +39,76 @@ public final class LsSkipCheck {
 	return ids.contains(toKebab(checkId));
     }
 
-    static Set<String> collectIds(String text) {
+    public static Set<String> skipCheckIds(String text) {
+	return collectEdtIds(text);
+    }
+
+    public static boolean isLsCheckId(String id) {
+	return canonicalLsCode(id) != null;
+    }
+
+    public static String canonicalLsCode(String id) {
+	if (id == null || id.isBlank()) {
+	    return null;
+	}
+	if (ALL_LS.equalsIgnoreCase(id)) {
+	    return ALL_LS;
+	}
+	if (LsDiagnosticCatalog.isKnown(id)) {
+	    return id;
+	}
+	for (String code : LsDiagnosticCatalog.codes()) {
+	    if (code.equalsIgnoreCase(id) || toKebab(code).equalsIgnoreCase(id)) {
+		return code;
+	    }
+	}
+	return null;
+    }
+
+    private static boolean isInsideBsllsOff(String[] lines, int lastIndexInclusive, String checkId) {
+	boolean allOff = false;
+	var codesOff = new HashSet<String>();
+	for (int i = 0; i <= lastIndexInclusive; i++) {
+	    var matcher = BSLLS_TOGGLE.matcher(lines[i]);
+	    while (matcher.find()) {
+		var code = matcher.group(1);
+		boolean off = "off".equalsIgnoreCase(matcher.group(2));
+		if (code == null || code.isBlank()) {
+		    allOff = off;
+		    continue;
+		}
+		var id = normalize(code);
+		if (off) {
+		    codesOff.add(id);
+		    codesOff.add(toKebab(id));
+		} else {
+		    codesOff.remove(id);
+		    codesOff.remove(toKebab(id));
+		}
+	    }
+	}
+	return allOff || isSkipped(codesOff, checkId);
+    }
+
+    private static Set<String> collectEdtIds(String text) {
 	if (text == null || text.isBlank()) {
 	    return Collections.emptySet();
 	}
 	var ids = new HashSet<String>();
 	var matcher = SKIP.matcher(text);
 	while (matcher.find()) {
-	    for (String token : matcher.group(1).split("[,\\s]+")) {
+	    var payload = matcher.group(1);
+	    int commentPart = payload.indexOf(" -");
+	    if (commentPart >= 0) {
+		payload = payload.substring(0, commentPart);
+	    }
+	    for (String token : payload.split("[,\\s]+")) {
 		if (!token.isBlank()) {
 		    ids.add(normalize(token));
 		}
 	    }
 	}
 	return ids;
-    }
-
-    private static String firstNonEmptyLines(String[] lines, int limit) {
-	var builder = new StringBuilder();
-	int taken = 0;
-	for (String line : lines) {
-	    if (line.isBlank()) {
-		if (taken > 0) {
-		    break;
-		}
-		continue;
-	    }
-	    if (!isCommentLine(line)) {
-		break;
-	    }
-	    if (builder.length() > 0) {
-		builder.append('\n');
-	    }
-	    builder.append(line);
-	    taken++;
-	    if (taken >= limit) {
-		break;
-	    }
-	}
-	return builder.toString();
-    }
-
-    private static boolean isCommentLine(String line) {
-	var trimmed = line.stripLeading();
-	return trimmed.startsWith("//");
     }
 
     private static String normalize(String value) {

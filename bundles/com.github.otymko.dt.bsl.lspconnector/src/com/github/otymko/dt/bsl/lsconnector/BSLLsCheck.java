@@ -10,7 +10,6 @@ import com.e1c.g5.v8.dt.check.components.BasicCheck;
 import com.e1c.g5.v8.dt.check.settings.IssueSeverity;
 import com.e1c.g5.v8.dt.check.settings.IssueType;
 import com.github.otymko.dt.bsl.lsconnector.check.LsCheckSupport;
-import com.github.otymko.dt.bsl.lsconnector.check.LsDiagnosticCatalog;
 import com.github.otymko.dt.bsl.lsconnector.check.LsSkipCheck;
 
 /**
@@ -28,7 +27,7 @@ public class BSLLsCheck extends BasicCheck<Void> {
     @Override
     protected void configureCheck(CheckConfigurer configurationBuilder) {
 	configurationBuilder.title("Прочие диагностики BSL LS")
-		.description("Диагностики BSL Language Server вне каталога. " + LsDiagnosticCatalog.V8STD_INDEX)
+		.description("Прочие диагностики BSL Language Server")
 		.complexity(CheckComplexity.COMPLEX)
 		.severity(IssueSeverity.MINOR)
 		.issueType(IssueType.CODE_STYLE)

@@ -15,9 +15,11 @@ import com.e1c.g5.v8.dt.check.settings.IssueType;
 
 /**
  * Одна диагностика BSL LS как отдельная проверка EDT. Код проверки совпадает
- * с ключом LS ({@code LineLength}), поэтому «Подавить» пишет
- * {@code //@skip-check LineLength}, а «Открыть проверку» открывает карточку
- * со ссылкой на {@code https://v8std.ru/diagnostics/bslls/LineLength/}.
+ * с ключом LS ({@code LineLength}). «Подавить» ставит пару вокруг строки
+ * маркера: {@code // BSLLS:LineLength-off} … {@code // BSLLS:LineLength-on}.
+ * {@code //@skip-check} относится к проверкам EDT и эту диагностику не глушит.
+ * «Открыть проверку» открывает карточку со ссылкой на
+ * {@code https://v8std.ru/diagnostics/bslls/LineLength/}.
  */
 public class BslLsDiagnosticCheck extends BasicCheck<Void> implements IExecutableExtension {
     private String diagnosticCode = "Unknown";
@@ -39,9 +41,7 @@ public class BslLsDiagnosticCheck extends BasicCheck<Void> implements IExecutabl
     protected void configureCheck(CheckConfigurer configurationBuilder) {
 	var info = LsDiagnosticCatalog.get(diagnosticCode);
 	var title = info == null ? diagnosticCode : info.getTitle() + " (" + diagnosticCode + ")";
-	var description = info == null
-		? "Диагностика BSL Language Server. " + LsDiagnosticCatalog.v8stdUrl(diagnosticCode)
-		: info.getDescription();
+	var description = info == null ? title : info.getDescription();
 	var severity = info == null ? IssueSeverity.MINOR : info.getSeverity();
 	var issueType = info == null ? IssueType.CODE_STYLE : info.getIssueType();
 	configurationBuilder.title(title)

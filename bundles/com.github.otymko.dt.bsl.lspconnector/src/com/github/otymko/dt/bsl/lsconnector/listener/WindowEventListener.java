@@ -17,6 +17,7 @@ public class WindowEventListener implements IWindowListener {
 
     public static void addListenersToPage(IWorkbenchPage page) {
 	page.addPartListener(OPEN_EDITOR_TRIGGER);
+	LsSkipCheckRewriter.attachOpenEditors(page);
     }
 
     public static void removeListenerFromAllPages(IWorkbenchWindow window) {

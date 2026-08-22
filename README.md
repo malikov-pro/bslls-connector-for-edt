@@ -47,10 +47,11 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 Замечания BSL LS попадают в панель 1С:EDT `Проблемы конфигурации` и видны в `get_project_errors`.
 Каждая диагностика LS — отдельная проверка EDT: код совпадает с ключом BSL LS (`LineLength`, `MethodSize`, …).
 
-* **Подавить предупреждение** вставляет `//@skip-check LineLength` — как у типовых проверок EDT (`//@skip-check use-non-recommended-method`).
-* **Открыть проверку** открывает карточку диагностики со ссылкой на https://v8std.ru/diagnostics/bslls/LineLength/ (подставьте ключ диагностики).
-* `//@skip-check bsl-ls` подавляет все диагностики коннектора на этом фрагменте.
-* Комментарии `// BSLLS:LineLength-off` по-прежнему обрабатывает сам Language Server.
+Проверки EDT и BSL LS идут **параллельно**, замечания не склеиваем. Текст LS в обоих каналах коннектора начинается с `[BSL LS]`, чтобы его нельзя было принять за типовое сообщение EDT. ПКМ **«Проверить»** — дорогой прогон Xtext EDT (надпись «Проверка Xтекст» коннектор не рисует); обычное сохранение тоже поднимает Xtext-канал. `ICheck` пишет в `Проблемы конфигурации`.
+
+* **Подавить** у проверки EDT пишет `//@skip-check <код EDT>`. Такие комментарии диагностики BSL LS не глушат.
+* **Подавить** у проверки BSL LS ставит пару вокруг строки маркера: `// BSLLS:LineLength-off` … `// BSLLS:LineLength-on` (или `// BSLLS:off` … `// BSLLS:on` на все диагностики LS). `-on` можно сдвинуть ниже.
+* **Открыть проверку** открывает карточку диагностики: текст статьи с [v8std.ru](https://v8std.ru/diagnostics/bslls/LineLength/) (раздел `bslls`). В «См.» — URL карточки v8std и документации BSL LS (текст ссылки = сам URL), плюс ссылки из статьи (ИТС / std).
 
 Каталог кодов: [v8std.ru/diagnostics](https://v8std.ru/diagnostics/) (раздел `bslls`). Список в плагине обновляется скриптом `scripts/generate-ls-checks.py`.
 
@@ -60,7 +61,7 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 2. Укажите zip:
    `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/com.github.otymko.dt.bsl.lsconnector.repository-0.3.0-SNAPSHOT.zip`
 3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
-4. Если стоит старая версия коннектора: `Справка` → `О программе` → `Сведения об установке` → удалите `BSL LS connector for EDT`, затем ставьте заново из этого zip.
+4. Каждая сборка даёт новый квалификатор (`0.3.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
 5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
 
 ## Разработчикам
@@ -71,6 +72,7 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 * Maven 3.9+
 * Доступ к репозиторию EDT (credentials в `bom/settings.xml`)
 * Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
+* Сабмодуль [zeegin/v8std](https://github.com/zeegin/v8std): `git clone --recurse-submodules …` или `git submodule update --init third_party/v8std`
 
 ### Целевая платформа в EDT
 
@@ -121,13 +123,18 @@ mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
 
 Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. 2025.2 берёт LSP4J 0.23.1, 2026.1 — LSP4J 1.0.0.
 
-Каталог диагностик (plugin.xml, `ls-diagnostics.tsv`, карточки `check.descriptions/`) обновляется так:
+Каталог диагностик (`plugin.xml`, `ls-diagnostics.tsv`) и HTML-карточки `check.descriptions/` собираются из сабмодуля [zeegin/v8std](https://github.com/zeegin/v8std) (`third_party/v8std`). Карточки в git не хранятся: их пишет `scripts/generate-ls-checks.py` и кладёт в плагин при сборке. Статьи `docs/diagnostics/bslls/*.md` приводятся к формату карточек EDT [v8-code-style](https://github.com/1C-Company/v8-code-style) (заголовок, текст, примеры, «См.»).
 
 ```bash
-python3 scripts/generate-ls-checks.py путь/к/индексу-диагностик.txt
+git submodule update --init third_party/v8std
+python3 scripts/generate-ls-checks.py
+# или при Maven-сборке (если сабмодуль уже есть, профиль generate-checks включается сам):
+mvn -pl bundles/com.github.otymko.dt.bsl.lspconnector generate-resources
 ```
 
-Индекс — страница [diagnostics](https://1c-syntax.github.io/bsl-language-server/diagnostics/) (markdown-таблица с ключами).
+Чужой клон: `python3 scripts/generate-ls-checks.py --v8std-dir путь/к/v8std`.
+Без сети: `--offline` (нужен сабмодуль или ранее скачанный `.cache/v8std`).
+По желанию можно передать старый индекс BSL LS (markdown-таблица с ключами) первым аргументом.
 
 Результат сборки — p2-репозиторий в `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/`.
 Ставьте этот репозиторий в ту EDT, под которую собирали.

@@ -39,7 +39,18 @@ public class LSService {
 	preferenceStore = plugin.getPreferenceStore();
     }
 
-    public void start() {
+    public synchronized boolean ensureStarted() {
+	if (isLaunched()) {
+	    return true;
+	}
+	start();
+	return isLaunched();
+    }
+
+    public synchronized void start() {
+	if (isLaunched()) {
+	    return;
+	}
 	if (getLaunchMode() == LaunchMode.WEBSOCKET) {
 	    connectWebSocket();
 	} else {
@@ -52,7 +63,7 @@ public class LSService {
 	plugin.getStatusService().refreshLocalVersion();
     }
 
-    public void stop() {
+    public synchronized void stop() {
 	try {
 	    if (connector != null) {
 		connector.shutdown();

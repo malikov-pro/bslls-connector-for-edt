@@ -15,6 +15,7 @@ import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 public final class LsDiagnosticCatalog {
     public static final String V8STD_INDEX = "https://v8std.ru/diagnostics/";
     public static final String V8STD_BSLLS = "https://v8std.ru/diagnostics/bslls/";
+    public static final String MESSAGE_PREFIX = "[BSL LS] ";
 
     private static final Map<String, LsDiagnosticInfo> BY_CODE = load();
 
@@ -43,6 +44,17 @@ public final class LsDiagnosticCatalog {
     public static String titleOrCode(String code) {
 	var info = get(code);
 	return info == null ? code : info.getTitle() + " (" + code + ")";
+    }
+
+    public static String formatIssueMessage(String code, String lsMessage) {
+	var text = lsMessage == null || lsMessage.isBlank() ? code : lsMessage.strip();
+	if (text == null || text.isBlank()) {
+	    text = "BSL LS";
+	}
+	if (text.startsWith(MESSAGE_PREFIX) || text.startsWith("[BSL LS]")) {
+	    return text;
+	}
+	return MESSAGE_PREFIX + text;
     }
 
     private static Map<String, LsDiagnosticInfo> load() {
