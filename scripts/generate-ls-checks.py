@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Generate BSL LS check catalog, plugin.xml entries and HTML descriptions.
+"""Generate BSL LS check catalog, plugin.xml entries and check descriptions.
 
 Descriptions come from the [zeegin/v8std](https://github.com/zeegin/v8std)
-git submodule (`third_party/v8std`). Articles are normalized to the same HTML
-shape as EDT v8-code-style cards: title, lead, examples, «См.» with
-v8std / BSL LS URLs (visible text = URL) plus links from the article.
+git submodule (`third_party/v8std`). Source Markdown from the `bslls` and
+`v8-code-style` families is copied to `check.descriptions`; an EDT HTML card
+with the same check ID is generated next to every Markdown file.
 """
 
 from __future__ import annotations
@@ -29,6 +29,8 @@ V8STD_GIT = "https://github.com/zeegin/v8std.git"
 V8STD_SITE = "https://v8std.ru"
 V8STD = "https://v8std.ru/diagnostics/bslls"
 BSL_DOCS = "https://1c-syntax.github.io/bsl-language-server/diagnostics"
+BSLLS_FAMILY = "bslls"
+EDT_FAMILY = "v8-code-style"
 
 TYPE_MAP = {
     "Ошибка": "error",
@@ -65,7 +67,7 @@ V8STD_INDEX_ROW = re.compile(
     r"(Блокирующий|Критичный|Важный|Незначительный|Информационный)\s*\|"
 )
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
-TITLE_WITH_CODE = re.compile(r"^(.*)\s+\(([A-Za-z][A-Za-z0-9]+)\)\s*$")
+TITLE_WITH_CODE = re.compile(r"^(.*)\s+\(([A-Za-z][A-Za-z0-9-]+)\)\s*$")
 FRONT_MATTER = re.compile(r"^---\n.*?\n---\n", re.S)
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
 STD_LINK = re.compile(r"^(?:\.\./)+std/(\d+)\.md(?:#(.*))?$")
@@ -191,6 +193,7 @@ def normalize_article(markdown: str) -> str:
             out.extend(body)
             continue
         if level == 1:
+            out.extend(body)
             continue
         key = heading_key(title)
         if key in HEADING_SKIP:
@@ -220,10 +223,13 @@ def ensure_see_section(markdown: str, links: list[tuple[str, str]], heading: str
     return (markdown.rstrip() + f"\n\n## {heading}\n\n" + items).lstrip() + "\n"
 
 
-def see_links(code: str) -> list[tuple[str, str]]:
-    v8std = f"{V8STD}/{code}/"
-    bsl = f"{BSL_DOCS}/{code}/"
-    return [(v8std, v8std), (bsl, bsl)]
+def see_links(code: str, family: str) -> list[tuple[str, str]]:
+    v8std = f"{V8STD_SITE}/diagnostics/{family}/{code}/"
+    links = [(v8std, v8std)]
+    if family == BSLLS_FAMILY:
+        bsl = f"{BSL_DOCS}/{code}/"
+        links.append((bsl, bsl))
+    return links
 
 
 def inline_html(text: str) -> str:
@@ -392,9 +398,21 @@ def md_to_html_body(markdown: str) -> str:
     return "\n".join(out)
 
 
-def html_page(code: str, title: str, body: str) -> str:
+def suppression_hint(code: str, family: str) -> str:
+    if family == BSLLS_FAMILY:
+        if code == "bsl-ls":
+            return "Ручное подавление в модуле: <code>// BSLLS:off</code> … <code>// BSLLS:on</code>"
+        return (
+            "Ручное подавление в модуле: "
+            f"<code>// BSLLS:{html.escape(code)}-off</code> … "
+            f"<code>// BSLLS:{html.escape(code)}-on</code>"
+        )
+    return f"Подавление в модуле: <code>//@skip-check {html.escape(code)}</code>"
+
+
+def html_page(code: str, title: str, body: str, family: str) -> str:
     heading = f"{title} ({code})"
-    skip = f"Подавление в модуле: <code>//@skip-check {code}</code>"
+    skip = suppression_hint(code, family)
     return f"""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
@@ -419,7 +437,7 @@ def fallback_html() -> str:
 </head>
 <body>
 <h1>Прочие диагностики BSL LS</h1>
-<p>Подавление в модуле: <code>//@skip-check bsl-ls</code></p>
+<p>Ручное подавление в модуле: <code>// BSLLS:off</code> … <code>// BSLLS:on</code></p>
 <p>Диагностика BSL Language Server, которой ещё нет в каталоге коннектора.</p>
 <h2>См.</h2>
 <ul>
@@ -431,30 +449,62 @@ def fallback_html() -> str:
 """
 
 
-def article_html(code: str, title: str, markdown: str | None) -> str:
+def article_html(code: str, title: str, markdown: str | None, family: str) -> str:
     prepared = normalize_article(markdown) if markdown else ""
-    prepared = ensure_see_section(prepared, see_links(code))
-    return html_page(code, title, md_to_html_body(prepared))
+    prepared = ensure_see_section(prepared, see_links(code, family))
+    return html_page(code, title, md_to_html_body(prepared), family)
 
 
-def write_html(rows: list[tuple[str, str, str, str]], articles: dict[str, str]) -> int:
+def write_descriptions(
+    rows: list[tuple[str, str, str, str]],
+    bsl_articles: dict[str, str],
+    edt_articles: dict[str, str],
+) -> tuple[int, int]:
     DESC_RU.mkdir(parents=True, exist_ok=True)
     DESC_EN.mkdir(parents=True, exist_ok=True)
-    for path in DESC_EN.glob("*.html"):
-        path.unlink()
+    for pattern in ("*.html", "*.md"):
+        for path in DESC_EN.glob(pattern):
+            path.unlink()
     for path in DESC_RU.glob("*.html"):
         path.unlink()
     (DESC_RU / "bsl-ls.html").write_text(fallback_html(), encoding="utf-8")
     (DESC_EN / "bsl-ls.html").write_text(fallback_html(), encoding="utf-8")
-    converted = 0
+
+    collisions = set(bsl_articles) & set(edt_articles)
+    if collisions:
+        names = ", ".join(sorted(collisions))
+        raise SystemExit(f"Одинаковые коды в bslls и v8-code-style: {names}")
+
+    bsl_titles = {code: title for code, title, _kind, _severity in rows}
+    written_bsl = 0
     for code, title, _kind, _severity in rows:
-        markdown = articles.get(code)
-        page = article_html(code, title, markdown)
+        markdown = bsl_articles.get(code)
+        page = article_html(code, title, markdown, BSLLS_FAMILY)
         if markdown:
-            converted += 1
+            (DESC_EN / f"{code}.md").write_text(markdown, encoding="utf-8")
+            written_bsl += 1
         (DESC_RU / f"{code}.html").write_text(page, encoding="utf-8")
         (DESC_EN / f"{code}.html").write_text(page, encoding="utf-8")
-    return converted
+
+    # Copy articles that have not reached the BSL LS index yet as documentation too.
+    for code in sorted(set(bsl_articles) - set(bsl_titles), key=str.lower):
+        markdown = bsl_articles[code]
+        title = title_from_markdown(markdown, code)
+        page = article_html(code, title, markdown, BSLLS_FAMILY)
+        (DESC_EN / f"{code}.md").write_text(markdown, encoding="utf-8")
+        (DESC_EN / f"{code}.html").write_text(page, encoding="utf-8")
+        (DESC_RU / f"{code}.html").write_text(page, encoding="utf-8")
+        written_bsl += 1
+
+    written_edt = 0
+    for code, markdown in sorted(edt_articles.items(), key=lambda item: item[0].lower()):
+        title = title_from_markdown(markdown, code)
+        page = article_html(code, title, markdown, EDT_FAMILY)
+        (DESC_EN / f"{code}.md").write_text(markdown, encoding="utf-8")
+        (DESC_EN / f"{code}.html").write_text(page, encoding="utf-8")
+        (DESC_RU / f"{code}.html").write_text(page, encoding="utf-8")
+        written_edt += 1
+    return written_bsl, written_edt
 
 
 def plugin_xml(rows: list[tuple[str, str, str, str]]) -> str:
@@ -576,8 +626,8 @@ def ensure_v8std(dest: pathlib.Path, *, update: bool) -> pathlib.Path:
     return dest
 
 
-def load_articles(v8std_root: pathlib.Path) -> dict[str, str]:
-    folder = v8std_root / "docs" / "diagnostics" / "bslls"
+def load_articles(v8std_root: pathlib.Path, family: str) -> dict[str, str]:
+    folder = v8std_root / "docs" / "diagnostics" / family
     if not folder.is_dir():
         raise SystemExit(f"В клоне v8std нет {folder}")
     articles: dict[str, str] = {}
@@ -627,7 +677,8 @@ def main(argv: list[str] | None = None) -> int:
                 "Сделайте git submodule update --init third_party/v8std"
             )
         v8std_root = ensure_v8std(v8std_dir, update=v8std_dir.exists() and v8std_dir != V8STD_SUBMODULE)
-    articles = load_articles(v8std_root)
+    bsl_articles = load_articles(v8std_root, BSLLS_FAMILY)
+    edt_articles = load_articles(v8std_root, EDT_FAMILY)
     if args.index is not None:
         rows = parse_bsl_index(args.index.read_text(encoding="utf-8"))
         source = str(args.index)
@@ -636,15 +687,18 @@ def main(argv: list[str] | None = None) -> int:
         rows = parse_v8std_index(index_path.read_text(encoding="utf-8"))
         source = str(index_path)
         rows = [
-            (code, title_from_markdown(articles.get(code, ""), code), kind, severity)
+            (code, title_from_markdown(bsl_articles.get(code, ""), code), kind, severity)
             for code, _title, kind, severity in rows
         ]
     if len(rows) < 100:
         raise SystemExit(f"Слишком мало диагностик в индексе: {len(rows)}")
     write_tsv(rows)
-    converted = write_html(rows, articles)
+    written_bsl, written_edt = write_descriptions(rows, bsl_articles, edt_articles)
     PLUGIN_XML.write_text(plugin_xml(rows), encoding="utf-8")
-    print(f"Сгенерировано {len(rows)} диагностик из {source}; статей v8std: {converted}")
+    print(
+        f"Сгенерировано {len(rows)} диагностик из {source}; "
+        f"описаний BSL LS: {written_bsl}; описаний EDT: {written_edt}"
+    )
     return 0
 
 

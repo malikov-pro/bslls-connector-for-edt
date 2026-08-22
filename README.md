@@ -1,13 +1,17 @@
 # Коннектор BSL LS для 1С:EDT
 
 Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/).
-Это добавляет `128+` [диагностик](https://1c-syntax.github.io/bsl-language-server/diagnostics/).
+Каталог формируется из [v8std](https://v8std.ru/diagnostics/bslls/) и сейчас содержит 186 диагностик.
 
 ## Возможности
 
-- [x] Проверки кода
-- [ ] Быстрые исправления
-- [ ] Произвольные ссылки
+- [x] Диагностики BSL LS в редакторе и панели `Проблемы конфигурации`
+- [x] Отдельная проверка EDT для каждого кода BSL LS
+- [x] Запуск BSL LS в режимах native, JAR и WebSocket
+- [x] Загрузка последних релизов BSL LS и индикация состояния подключения
+- [x] Карточки диагностик EDT со статьями и ссылками v8std
+- [x] Ручное подавление через регионы `// BSLLS:...-off/on`
+- [ ] Быстрые исправления из LSP `codeAction`
 
 ## Установка
 
@@ -18,7 +22,7 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 ```
 3. Нажмите `Добавить`.
 4. Установите флажок на `BSL LS connector for EDT`.
-5. Убедитесь, что установлен фложок `Обращаться во время инсталяции ко всем сайтам обновления для поиска требуемого ПО`.
+5. Убедитесь, что установлен флажок `Обращаться во время инсталляции ко всем сайтам обновления для поиска требуемого ПО`.
 6. Нажмите `Далее` -> `Готово`.
 7. Перезапустите 1С:EDT.
 
@@ -59,9 +63,9 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 1. `Справка` → `Установить новое ПО` → `Добавить` → `Архив`.
 2. Укажите zip:
-   `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/com.github.otymko.dt.bsl.lsconnector.repository-0.3.0-SNAPSHOT.zip`
+   `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/com.github.otymko.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
 3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
-4. Каждая сборка даёт новый квалификатор (`0.3.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
+4. Каждая сборка даёт новый квалификатор (`0.4.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
 5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
 
 ## Разработчикам
@@ -123,7 +127,7 @@ mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
 
 Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. 2025.2 берёт LSP4J 0.23.1, 2026.1 — LSP4J 1.0.0.
 
-Каталог диагностик (`plugin.xml`, `ls-diagnostics.tsv`) и HTML-карточки `check.descriptions/` собираются из сабмодуля [zeegin/v8std](https://github.com/zeegin/v8std) (`third_party/v8std`). Карточки в git не хранятся: их пишет `scripts/generate-ls-checks.py` и кладёт в плагин при сборке. Статьи `docs/diagnostics/bslls/*.md` приводятся к формату карточек EDT [v8-code-style](https://github.com/1C-Company/v8-code-style) (заголовок, текст, примеры, «См.»).
+Каталог диагностик (`plugin.xml`, `ls-diagnostics.tsv`) и карточки `check.descriptions/` собираются из сабмодуля [zeegin/v8std](https://github.com/zeegin/v8std) (`third_party/v8std`). Карточки в git не хранятся: их пишет `scripts/generate-ls-checks.py` и кладёт в плагин при сборке. Для каждого кода из `docs/diagnostics/bslls` и `docs/diagnostics/v8-code-style` исходная статья копируется как `<код>.md`, а рядом создаётся HTML-карточка EDT `<код>.html`. BSL LS использует CamelCase-коды (`LineLength`), EDT — dash-case (`module-unused-local-variable`).
 
 ```bash
 git submodule update --init third_party/v8std

@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Актуализация
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Установка JDK
         uses: actions/setup-java@v4
