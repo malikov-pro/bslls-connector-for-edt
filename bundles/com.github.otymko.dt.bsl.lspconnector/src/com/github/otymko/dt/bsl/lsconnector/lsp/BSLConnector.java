@@ -107,6 +107,7 @@ public class BSLConnector {
 	var paramsSave = new DidSaveTextDocumentParams();
 	var textDocumentIdentifier = new TextDocumentIdentifier();
 	textDocumentIdentifier.setUri(uri.toString());
+	paramsSave.setTextDocument(textDocumentIdentifier);
 	runFutureTask(() -> server.getTextDocumentService().didSave(paramsSave), DEFAULT_SMALL_TIMEOUT);
     }
 

@@ -88,8 +88,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	    return;
 	}
 	var text = event.getText();
-	boolean smallInsert = text.length() < 500;
-	if (smallInsert && LsSkipCheck.skipCheckIds(text).stream().noneMatch(LsSkipCheck::isLsCheckId)) {
+	if (LsSkipCheck.skipCheckIds(text).stream().noneMatch(LsSkipCheck::isLsCheckId)) {
 	    return;
 	}
 	scheduleRewrite(event.getOffset(), text.length());
@@ -120,17 +119,10 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	}
 	try {
 	    int last = document.getNumberOfLines() - 1;
-	    int startLine;
-	    int endLine;
-	    if (length >= 500) {
-		startLine = 0;
-		endLine = last;
-	    } else {
-		int start = Math.max(0, Math.min(offset, document.getLength()));
-		int end = Math.max(start, Math.min(offset + Math.max(length, 0), document.getLength()));
-		startLine = Math.max(0, document.getLineOfOffset(start) - 1);
-		endLine = Math.min(last, document.getLineOfOffset(end));
-	    }
+	    int start = Math.max(0, Math.min(offset, document.getLength()));
+	    int end = Math.max(start, Math.min(offset + Math.max(length, 0), document.getLength()));
+	    int startLine = Math.max(0, document.getLineOfOffset(start) - 1);
+	    int endLine = Math.min(last, document.getLineOfOffset(end));
 	    var skipLines = new ArrayList<Integer>();
 	    for (int line = startLine; line <= endLine; line++) {
 		if (!LsSuppressionComments.lsCodesFromSkipLine(lineText(line)).isEmpty()) {
