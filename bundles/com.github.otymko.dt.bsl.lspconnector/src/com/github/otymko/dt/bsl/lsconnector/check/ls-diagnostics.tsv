@@ -1,0 +1,187 @@
+code	title	type	severity
+AllFunctionPathMustHaveReturn	Все возможные пути выполнения функции должны содержать оператор Возврат	smell	major
+AssignAliasFieldsInQuery	Назначение псевдонимов выбранным полям в запросе	smell	major
+AssignToReadOnlyProperty	Присвоение значения свойству, доступному только для чтения	error	major
+BadExceptionCategory	Недопустимая категория исключений	smell	trivial
+BadWords	Запрещенные слова	smell	major
+BeginTransactionBeforeTryCatch	Нарушение правил работы с транзакциями для метода 'НачатьТранзакцию'	error	major
+CachedPublic	Кеширование программного интерфейса	smell	major
+CanonicalSpellingKeywords	Каноническое написание ключевых слов	smell	trivial
+CodeAfterAsyncCall	После вызова асинхронного метода есть строки кода	smell	major
+CodeBlockBeforeSub	Определения методов должны размещаться перед операторами тела модуля	error	blocker
+CodeOutOfRegion	Код расположен вне области	smell	trivial
+CognitiveComplexity	Когнитивная сложность	smell	critical
+CommandModuleExportMethods	Экспортные методы в модулях команд и общих команд	smell	trivial
+CommentedCode	Закомментированный фрагмент кода	smell	minor
+CommitTransactionOutsideTryCatch	Нарушение правил работы с транзакциями для метода 'ЗафиксироватьТранзакцию'	error	major
+CommonModuleAssign	Присвоение общему модулю	error	blocker
+CommonModuleInvalidType	Общий модуль недопустимого типа	error	major
+CommonModuleMissingAPI	Общий модуль должен иметь программный интерфейс	smell	minor
+CommonModuleNameCached	Пропущен постфикс "ПовтИсп"	smell	major
+CommonModuleNameClient	Пропущен постфикс "Клиент"	smell	minor
+CommonModuleNameClientServer	Пропущен постфикс "КлиентСервер"	smell	major
+CommonModuleNameFullAccess	Пропущен постфикс "ПолныеПрава"	potential-security	major
+CommonModuleNameGlobal	Пропущен постфикс "Глобальный"	smell	major
+CommonModuleNameGlobalClient	Глобальный модуль с постфиксом "Клиент"	smell	major
+CommonModuleNameServerCall	Пропущен постфикс "ВызовСервера"	smell	minor
+CommonModuleNameWords	Нерекомендуемое имя общего модуля	smell	trivial
+CommonModuleVariables	Объявление переменных в общем модуле	error	critical
+CompareWithBoolean	Сравнение с булевой константой	smell	minor
+CompilationDirectiveLost	Директивы компиляции методов	smell	major
+CompilationDirectiveNeedLess	Лишняя директива компиляции	smell	major
+ConsecutiveEmptyLines	Подряд идущие пустые строки	smell	trivial
+CrazyMultilineString	Безумные многострочные литералы	smell	major
+CreateQueryInCycle	Выполнение запроса в цикле	error	critical
+CyclomaticComplexity	Цикломатическая сложность	smell	critical
+DataExchangeLoading	Отсутствует проверка признака ОбменДанными.Загрузка в обработчике событий объекта	error	critical
+DeletingCollectionItem	Удаление элемента при обходе коллекции посредством оператора "Для каждого ... Из ... Цикл"	error	major
+DenyIncompleteValues	Запрет незаполненных значений у измерений регистров	smell	major
+DeprecatedAttributes8312	Устаревшие объекты платформы 8.3.12	smell	trivial
+DeprecatedCurrentDate	Использование устаревшего метода "ТекущаяДата"	error	major
+DeprecatedFind	Использование устаревшего метода "Найти"	smell	minor
+DeprecatedMessage	Ограничение на использование устаревшего метода "Сообщить"	smell	minor
+DeprecatedMethodCall	Устаревшие методы не должны использоваться	smell	minor
+DeprecatedTypeManagedForm	Устаревшее использование типа "УправляемаяФорма"	smell	trivial
+DisableSafeMode	Отключение безопасного режима	security	major
+DoubleNegatives	Двойные отрицания	smell	major
+DuplicatedInsertionIntoCollection	Повторное добавление/вставка значений в коллекцию	smell	major
+DuplicateRegion	Повторяющиеся разделы модуля	smell	trivial
+DuplicateStringLiteral	Повторное использование строкового литерала	smell	minor
+EmptyCodeBlock	Пустой блок кода	smell	major
+EmptyRegion	Область не должна быть пустой	smell	trivial
+EmptyStatement	Пустой оператор	smell	trivial
+EventHandlerInvalidSignature	Несоответствие сигнатуры обработчика события	error	major
+EventHandlerOutsideEventRegion	Обработчик события вне стандартной области	smell	trivial
+ExcessiveAutoTestCheck	Избыточная проверка параметра АвтоТест	smell	minor
+ExecuteExternalCode	Выполнение произвольного кода на сервере	security	critical
+ExecuteExternalCodeInCommonModule	Выполнение произвольного кода в общем модуле на сервере	potential-security	critical
+ExportVariables	Запрет экспортных глобальных переменных модуля	smell	major
+ExternalAppStarting	Запуск внешних приложений	potential-security	major
+ExtraCommas	Запятые без указания параметра в конце вызова метода	smell	major
+FieldsFromJoinsWithoutIsNull	Отсутствие проверки на NULL для полей из присоединяемых таблиц	error	critical
+FileSystemAccess	Доступ к файловой системе	security	major
+ForbiddenMetadataName	Объекту метаданных присвоено запрещенное имя	error	blocker
+FormDataToValue	Использование метода ДанныеФормыВЗначение	smell	trivial
+FullOuterJoinQuery	Использование конструкции "ПОЛНОЕ ВНЕШНЕЕ СОЕДИНЕНИЕ" в запросах	smell	major
+FunctionNameStartsWithGet	Имя функции не должно начинаться с "Получить"	smell	trivial
+FunctionOutParameter	Исходящий параметр функции	smell	major
+FunctionReturnsSamePrimitive	Функция всегда возвращает одно и то же примитивное значение	error	major
+FunctionShouldHaveReturn	Функция должна содержать возврат	error	major
+GetFormMethod	Использование метода ПолучитьФорму	error	major
+GlobalContextMethodCollision8312	Конфликт имен методов с методами глобального контекста	error	blocker
+IdenticalExpressions	Одинаковые выражения слева и справа от "foo" оператора	error	major
+IfConditionComplexity	Использование сложных выражений в условии оператора "Если"	smell	minor
+IfElseDuplicatedCodeBlock	Повторяющиеся блоки кода в синтаксической конструкции Если...Тогда...ИначеЕсли...	smell	minor
+IfElseDuplicatedCondition	Повторяющиеся условия в синтаксической конструкции Если...Тогда...ИначеЕсли...	smell	major
+IfElseIfEndsWithElse	Использование синтаксической конструкции Если...Тогда...ИначеЕсли...	smell	major
+IncorrectLineBreak	Неправильный перенос выражения	smell	trivial
+IncorrectUseLikeInQuery	Некорректное использование 'ПОДОБНО'	error	major
+IncorrectUseOfStrTemplate	Неверное использование "СтрШаблон"	error	blocker
+InternetAccess	Обращение к Интернет-ресурсам	security	major
+InvalidCharacterInFile	Недопустимый символ	error	major
+IsInRoleMethod	Использование метода РольДоступна	smell	major
+JoinWithSubQuery	Соединение с вложенными запросами	smell	major
+JoinWithVirtualTable	Соединение с виртуальными таблицами	smell	major
+LatinAndCyrillicSymbolInWord	Смешивание латинских и кириллических символов в одном идентификаторе	smell	minor
+LineLength	Ограничение на длину строки	smell	minor
+LogicalOrInJoinQuerySection	Логическое 'ИЛИ' в соединениях запроса	smell	major
+LogicalOrInTheWhereSectionOfQuery	Использование логического "ИЛИ" в секции "ГДЕ" запроса	smell	major
+MagicDate	Магические даты	smell	minor
+MagicNumber	Магические числа	smell	minor
+MetadataObjectNameLength	Имена объектов метаданных не должны превышать допустимой длины наименования	error	major
+MethodSize	Ограничение на размер метода	smell	major
+MissedRequiredParameter	Пропущен обязательный параметр метода	error	major
+MissingCodeTryCatchEx	Конструкция "Попытка...Исключение...КонецПопытки" не содержит кода в исключении	error	major
+MissingCommonModuleMethod	Обращение к отсутствующему методу общего модуля	error	blocker
+MissingEventSubscriptionHandler	Отсутствует обработчик подписки на событие	error	blocker
+MissingParameterDescription	Отсутствует описание параметров метода	smell	major
+MissingReturnedValueDescription	Отсутствует описание возвращаемого значения функции	smell	major
+MissingSpace	Пропущены пробелы слева или справа от операторов`+ - * / = % < > <> <= >=`, от ключевых слов, а так же справа от`,`и`;`	smell	trivial
+MissingTemporaryFileDeletion	Отсутствует удаление временного файла после использования	error	major
+MissingTempStorageDeletion	Отсутствует удаление данных из временного хранилища после использования	smell	critical
+MissingVariablesDescription	Все объявления переменных должны иметь описание	smell	minor
+MultilineStringInQuery	Многострочный литерал в запросе	error	critical
+MultilingualStringHasAllDeclaredLanguages	Есть локализованный текст для всех заявленных в конфигурации языков	error	minor
+MultilingualStringUsingWithTemplate	Частично локализованный текст используется в функции СтрШаблон	error	major
+NestedConstructorsInStructureDeclaration	Использование конструкторов с параметрами при объявлении структуры	smell	minor
+NestedFunctionInParameters	Инициализация параметров методов и конструкторов вызовом вложенных методов	smell	minor
+NestedStatements	Управляющие конструкции не должны быть вложены слишком глубоко	smell	critical
+NestedTernaryOperator	Вложенный тернарный оператор	smell	major
+NonExportMethodsInApiRegion	Неэкспортные методы в областях ПрограммныйИнтерфейс и СлужебныйПрограммныйИнтерфейс	smell	major
+NonStandardRegion	Нестандартные разделы модуля	smell	trivial
+NumberOfOptionalParams	Ограничение на количество не обязательных параметров метода	smell	minor
+NumberOfParams	Ограничение на количество параметров метода	smell	minor
+NumberOfValuesInStructureConstructor	Ограничение на количество значений свойств, передаваемых в конструктор структуры	smell	minor
+OneStatementPerLine	Одно выражение в одной строке	smell	minor
+OrderOfParams	Порядок параметров метода	smell	major
+OrdinaryAppSupport	Поддержка обычного приложения	smell	major
+OSUsersMethod	Использование метода ПользователиОС	potential-security	critical
+PairingBrokenTransaction	Нарушение парности использования методов "НачатьТранзакцию()" и "ЗафиксироватьТранзакцию()" / "ОтменитьТранзакцию()"	error	major
+ParseError	Ошибка разбора исходного кода	error	critical
+PrivilegedModuleMethodCall	Обращение к методам привилегированных модулей	potential-security	major
+ProcedureReturnsValue	Процедура не должна возвращать значение	error	blocker
+ProtectedModule	Защищенные модули	smell	major
+PublicMethodsDescription	Все методы программного интерфейса должны иметь описание	smell	trivial
+QueryNestedFieldsByDot	Разыменование ссылочных полей запроса через точку	smell	major
+QueryParseError	Ошибка разбора текста запроса	smell	major
+QueryToMissingMetadata	Обращение к несуществующим метаданным в запросе	error	blocker
+RedundantAccessToObject	Избыточное обращение к объекту	smell	trivial
+RefOveruse	Избыточное использование "Ссылка" в запросе	smell	major
+ReservedParameterNames	Зарезервированные имена параметров	smell	major
+RewriteMethodParameter	Перезапись параметров метода	smell	major
+SameMetadataObjectAndChildNames	Совпадает имя объекта метаданного и его дочернего	error	critical
+ScheduledJobHandler	Обработчик регламентного задания	error	critical
+SelectTopWithoutOrderBy	Использование 'ВЫБРАТЬ ПЕРВЫЕ' без 'УПОРЯДОЧИТЬ ПО'	smell	major
+SelfAssign	Присвоение переменной самой себе	error	major
+SelfInsertion	Вставка коллекции в саму себя	error	major
+SemicolonPresence	Выражение должно заканчиваться символом ";"	smell	minor
+ServerCallsInFormEvents	Серверные вызовы в событиях форм	error	critical
+ServerSideExportFormMethod	Серверный экспортный метод формы	error	blocker
+SetPermissionsForNewObjects	Флажок «Устанавливать права для новых объектов» должен быть установлен только у роли ПолныеПрава	security	critical
+SetPrivilegedMode	Использование привилегированного режима	potential-security	major
+SeveralCompilerDirectives	Ошибочное указание нескольких директив компиляции	error	critical
+SpaceAtStartComment	Пробел в начале комментария	smell	trivial
+StyleElementConstructors	Конструктор элемента стиля	error	minor
+TempFilesDir	Вызов функции КаталогВременныхФайлов()	smell	major
+TernaryOperatorUsage	Использование тернарного оператора	smell	minor
+ThisObjectAssign	Присвоение значения свойству ЭтотОбъект	error	blocker
+TimeoutsInExternalResources	Таймауты при работе с внешними ресурсами	error	critical
+TooManyReturns	Метод не должен содержать много возвратов	smell	minor
+TransferringParametersBetweenClientAndServer	Передача параметров между клиентом и сервером	smell	major
+TryNumber	Приведение к числу в попытке	smell	major
+Typo	Опечатка	smell	trivial
+UnaryPlusInConcatenation	Унарный плюс в конкатенации строк	error	blocker
+UnavailableMemberCall	Использование метода/свойства, недоступного в целевой версии платформы	error	major
+UnionAll	Использование ключевого слова "ОБЪЕДИНИТЬ" в запросах	smell	minor
+UnknownMember	Обращение к неизвестному методу или свойству	error	major
+UnknownPreprocessorSymbol	Неизвестный символ препроцессора	error	critical
+UnreachableCode	Недостижимый код	error	minor
+UnsafeFindByCode	Небезопасное использование метода НайтиПоКоду()	smell	major
+UnsafeSafeModeMethodCall	Небезопасное использование функции БезопасныйРежим()	error	blocker
+UnusedLocalMethod	Неиспользуемый локальный метод	smell	major
+UnusedLocalVariable	Неиспользуемая локальная переменная	smell	major
+UnusedParameters	Неиспользуемый параметр	smell	major
+UsageWriteLogEvent	Неверное использование метода "ЗаписьЖурналаРегистрации"	smell	trivial
+UseLessForEach	Бесполезный перебор коллекции	error	critical
+UselessTernaryOperator	Бесполезный тернарный оператор	smell	trivial
+UseSystemInformation	Использование системной информации	potential-security	critical
+UsingCancelParameter	Работа с параметром "Отказ"	smell	major
+UsingExternalCodeTools	Использование возможностей выполнения внешнего кода	potential-security	critical
+UsingFindElementByString	Использование методов "НайтиПоНаименованию", "НайтиПоКоду" и "НайтиПоНомеру"	smell	major
+UsingGoto	Оператор "Перейти" не должен использоваться	smell	critical
+UsingHardcodeNetworkAddress	Хранение ip-адресов в коде	security	critical
+UsingHardcodePath	Хранение путей к файлам в коде	error	critical
+UsingHardcodeSecretInformation	Хранение конфиденциальной информации в коде	security	critical
+UsingLikeInQuery	Использование 'ПОДОБНО' в запросе	error	major
+UsingModalWindows	Использование модальных окон	smell	major
+UsingObjectNotAvailableUnix	Использование объектов недоступных в Unix системах	error	critical
+UsingServiceTag	Использование служебных тегов	smell	trivial
+UsingSynchronousCalls	Использование синхронных вызовов	smell	major
+UsingThisForm	Использование устаревшего свойства "ЭтаФорма"	smell	minor
+VirtualTableCallWithoutParameters	Обращение к виртуальной таблице без параметров	error	major
+WrongDataPathForFormElements	У полей формы не указан путь к данным	error	critical
+WrongHttpServiceHandler	Неверно задан обработчик метода http-сервиса	error	critical
+WrongUseFunctionProceedWithCall	Некорректное использование функции ПродолжитьВызов()	error	blocker
+WrongUseOfRollbackTransactionMethod	Некорректное использование метода ОтменитьТранзакцию()	error	critical
+WrongWebServiceHandler	Неверно задан обработчик операции web-сервиса	error	critical
+YoLetterUsage	Использование буквы "ё" в текстах модулей	smell	trivial

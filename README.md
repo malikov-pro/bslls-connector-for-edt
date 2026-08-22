@@ -44,7 +44,15 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 ### Просмотр списка найденных проблем
 
-Проверки, выполняемые 1С:EDT и текущим плагином используют разные панели отображения ошибок. Панель 1С:EDT разработана отдельно, называется `Проблемы конфигурации`. Плагин использует типовую панель Eclipse `Проблемы`.
+Замечания BSL LS попадают в панель 1С:EDT `Проблемы конфигурации` и видны в `get_project_errors`.
+Каждая диагностика LS — отдельная проверка EDT: код совпадает с ключом BSL LS (`LineLength`, `MethodSize`, …).
+
+* **Подавить предупреждение** вставляет `//@skip-check LineLength` — как у типовых проверок EDT (`//@skip-check use-non-recommended-method`).
+* **Открыть проверку** открывает карточку диагностики со ссылкой на https://v8std.ru/diagnostics/bslls/LineLength/ (подставьте ключ диагностики).
+* `//@skip-check bsl-ls` подавляет все диагностики коннектора на этом фрагменте.
+* Комментарии `// BSLLS:LineLength-off` по-прежнему обрабатывает сам Language Server.
+
+Каталог кодов: [v8std.ru/diagnostics](https://v8std.ru/diagnostics/) (раздел `bslls`). Список в плагине обновляется скриптом `scripts/generate-ls-checks.py`.
 
 ### Установка из архива
 
@@ -112,6 +120,14 @@ mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
 ```
 
 Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. 2025.2 берёт LSP4J 0.23.1, 2026.1 — LSP4J 1.0.0.
+
+Каталог диагностик (plugin.xml, `ls-diagnostics.tsv`, карточки `check.descriptions/`) обновляется так:
+
+```bash
+python3 scripts/generate-ls-checks.py путь/к/индексу-диагностик.txt
+```
+
+Индекс — страница [diagnostics](https://1c-syntax.github.io/bsl-language-server/diagnostics/) (markdown-таблица с ключами).
 
 Результат сборки — p2-репозиторий в `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/`.
 Ставьте этот репозиторий в ту EDT, под которую собирали.
