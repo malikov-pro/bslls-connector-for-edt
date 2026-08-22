@@ -18,9 +18,12 @@ import org.osgi.framework.BundleContext;
 
 import com.github.otymko.dt.bsl.lsconnector.listener.WindowEventListener;
 import com.github.otymko.dt.bsl.lsconnector.service.LSService;
+import com.github.otymko.dt.bsl.lsconnector.service.LsStatusService;
 import com.github.otymko.dt.bsl.lsconnector.service.WindowsEventService;
 import com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage;
 import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
+import com.github.otymko.dt.bsl.lsconnector.util.LaunchMode;
+import com.github.otymko.dt.bsl.lsconnector.util.LsCache;
 
 public class BSLPlugin extends Plugin {
     public static final String PLUGIN_ID = "com.github.otymko.dt.bsl.ls_connector";
@@ -29,8 +32,8 @@ public class BSLPlugin extends Plugin {
     protected static BundleContext context;
     private WindowsEventService windowsEventService;
     private LSService lsService;
+    private LsStatusService statusService;
     private Path appDir;
-    private Path pathToImageApp;
     private Path pathToWorkspace;
     private Optional<Path> pathToConfiguration;
     private ScopedPreferenceStore preferenceStore;
@@ -55,12 +58,12 @@ public class BSLPlugin extends Plugin {
 	return lsService;
     }
 
-    public Path getAppDir() {
-	return appDir;
+    public LsStatusService getStatusService() {
+	return statusService;
     }
 
-    public Path getPathToImageApp() {
-	return pathToImageApp;
+    public Path getAppDir() {
+	return appDir;
     }
 
     public Path getPathToWorkspace() {
@@ -144,16 +147,16 @@ public class BSLPlugin extends Plugin {
 
     private void startServices() {
 	windowsEventService = new WindowsEventService();
+	statusService = new LsStatusService();
 	lsService = new LSService(this);
     }
 
     private void initPreferenceStore() {
 	preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, PLUGIN_ID);
-	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_BSLLS,
-		pathToImageApp == null ? "" : pathToImageApp.toString());
-	preferenceStore.setDefault(BSLPreferencePage.EXTERNAL_JAR, true);
+	preferenceStore.setDefault(BSLPreferencePage.LAUNCH_MODE, LaunchMode.JAR.getId());
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
+	preferenceStore.setDefault(BSLPreferencePage.WEBSOCKET_URL, BSLPreferencePage.DEFAULT_WEBSOCKET_URL);
     }
 
     private void prepareForStart() {
@@ -175,6 +178,7 @@ public class BSLPlugin extends Plugin {
 	if (!appDir.toFile().exists()) {
 	    appDir.toFile().mkdir();
 	}
-	pathToImageApp = BSLCommon.getBundledLanguageServerJar().orElse(null);
+	LsCache.nativeDir(appDir).toFile().mkdir();
+	LsCache.jarDir(appDir).toFile().mkdir();
     }
 }

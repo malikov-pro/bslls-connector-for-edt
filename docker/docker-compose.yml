@@ -1,0 +1,11 @@
+services:
+  bsl-language-server:
+    build:
+      context: .
+      args:
+        BSL_LS_VERSION: "1.0.5"
+    ports:
+      - "8025:8025"
+    # volumes:
+    #   - ../example/.bsl-language-server.json:/config/.bsl-language-server.json:ro
+    # command: ["websocket", "--server.port=8025", "--configuration", "/config/.bsl-language-server.json"]

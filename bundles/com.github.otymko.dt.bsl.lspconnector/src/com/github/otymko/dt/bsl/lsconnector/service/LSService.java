@@ -1,17 +1,25 @@
 package com.github.otymko.dt.bsl.lsconnector.service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 import com.github.otymko.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.otymko.dt.bsl.lsconnector.lsp.BSLLanguageClient;
+import com.github.otymko.dt.bsl.lsconnector.lsp.WebSocketLspTransport;
 import com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage;
-import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
+import com.github.otymko.dt.bsl.lsconnector.util.LaunchMode;
+import com.github.otymko.dt.bsl.lsconnector.util.LsCache;
+import com.github.otymko.dt.bsl.lsconnector.util.LsVersionProbe;
 
 public class LSService {
     private final BSLPlugin plugin;
@@ -19,70 +27,94 @@ public class LSService {
     private final ScopedPreferenceStore preferenceStore;
     private Process process;
     private BSLConnector connector;
+    private WebSocketLspTransport webSocketTransport;
 
     public BSLConnector getConnector() {
 	return connector;
     }
-    
+
     public LSService(BSLPlugin plugin) {
 	this.plugin = plugin;
 	windowsEventService = plugin.getWindowsEventService();
 	preferenceStore = plugin.getPreferenceStore();
     }
-    
+
     public void start() {
-	createProcess();
-	connectToProcess();
+	if (getLaunchMode() == LaunchMode.WEBSOCKET) {
+	    connectWebSocket();
+	} else {
+	    createProcess();
+	    connectToProcess();
+	}
 	if (isLaunched()) {
 	    windowsEventService.start();
 	}
+	plugin.getStatusService().refreshLocalVersion();
     }
-    
+
     public void stop() {
-	if (connector != null) {
-	    connector.shutdown();
-	    connector.exit();
+	try {
+	    if (connector != null) {
+		connector.shutdown();
+		connector.exit();
+	    }
+	} catch (Exception e) {
+	    BSLPlugin.createWarningStatus("Остановка BSL LS: " + e.getMessage());
 	}
 	windowsEventService.stop();
+	if (process != null && process.isAlive()) {
+	    process.destroy();
+	    try {
+		if (!process.waitFor(2, TimeUnit.SECONDS)) {
+		    process.destroyForcibly();
+		}
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+		process.destroyForcibly();
+	    }
+	}
+	if (webSocketTransport != null) {
+	    webSocketTransport.close();
+	}
 	clear();
+	plugin.getStatusService().fireChanged();
     }
-    
+
     public void restart() {
 	stop();
 	start();
     }
-    
+
+    public LaunchMode getLaunchMode() {
+	return LaunchMode.from(preferenceStore.getString(BSLPreferencePage.LAUNCH_MODE));
+    }
+
     public boolean isLaunched() {
+	if (getLaunchMode() == LaunchMode.WEBSOCKET) {
+	    return webSocketTransport != null && webSocketTransport.isOpen();
+	}
 	return process != null && process.isAlive();
     }
 
     private void createProcess() {
 	var pathToConfiguration = plugin.getPathToConfiguration();
 	var pathToWorkspace = plugin.getPathToWorkspace();
-	var pathToLSP = getPathToBSLLS();
+	var mode = getLaunchMode();
+	var pathToLSP = findCachedArtifact(mode);
 
-	if (!pathToLSP.toFile().isFile()) {
-	    BSLPlugin.createWarningStatus("BSL Language Server не найден: " + pathToLSP);
+	if (pathToLSP.isEmpty()) {
+	    BSLPlugin.createWarningStatus(
+		    "BSL Language Server не найден в ~/.bsl-connector-for-edt. Выберите релиз в настройках.");
 	    return;
 	}
 
-	var launchAsJar = preferenceStore.getBoolean(BSLPreferencePage.EXTERNAL_JAR)
-		|| pathToLSP.toString().endsWith(".jar");
-
 	List<String> arguments = new ArrayList<>();
-	if (launchAsJar) {
-	    arguments.add(preferenceStore.getString(BSLPreferencePage.PATH_TO_JAVA));
-	    var javaOpts = preferenceStore.getString(BSLPreferencePage.JAVA_OPTS);
-	    if (javaOpts != null && !javaOpts.isBlank()) {
-		for (var opt : javaOpts.trim().split("\\s+")) {
-		    if (!opt.isEmpty()) {
-			arguments.add(opt);
-		    }
-		}
-	    }
+	if (mode == LaunchMode.JAR) {
+	    arguments.add(javaCommand());
+	    LsVersionProbe.addOpts(arguments, preferenceStore.getString(BSLPreferencePage.JAVA_OPTS));
 	    arguments.add("-jar");
 	}
-	arguments.add(pathToLSP.toString());
+	arguments.add(pathToLSP.get().toString());
 
 	if (pathToConfiguration.isPresent()) {
 	    arguments.add("--configuration");
@@ -104,31 +136,51 @@ public class LSService {
 	    BSLPlugin.createErrorStatus("Не удалось запустить процесс BSL LS", e);
 	}
     }
-    
+
     private void connectToProcess() {
 	if (process == null) {
 	    return;
 	}
-	var client = new BSLLanguageClient();
-	connector = new BSLConnector(client, process.getInputStream(), process.getOutputStream());
-	connector.startInThread();
-	plugin.sleepCurrentThread(2000); // FIXME: Сколько нужно ждать?
-	connector.initialize();
+	startConnector(process.getInputStream(), process.getOutputStream());
     }
-    
-    private void clear() {
-	process = null; 
-	connector = null;
-    }
-    
-    private Path getPathToBSLLS() {
-	var stored = preferenceStore.getString(BSLPreferencePage.PATH_TO_BSLLS);
-	if (stored != null && !stored.isBlank()) {
-	    var path = Path.of(stored);
-	    if (path.toFile().isFile()) {
-		return path;
+
+    private void connectWebSocket() {
+	var url = preferenceStore.getString(BSLPreferencePage.WEBSOCKET_URL);
+	if (url == null || url.isBlank()) {
+	    url = BSLPreferencePage.DEFAULT_WEBSOCKET_URL;
+	}
+	try {
+	    webSocketTransport = WebSocketLspTransport.connect(URI.create(url));
+	    startConnector(webSocketTransport.getInputStream(), webSocketTransport.getOutputStream());
+	} catch (Exception e) {
+	    BSLPlugin.createErrorStatus("Не удалось подключиться к BSL LS по WebSocket: " + url, e);
+	    if (webSocketTransport != null) {
+		webSocketTransport.close();
+		webSocketTransport = null;
 	    }
 	}
-	return BSLCommon.getBundledLanguageServerJar().orElse(Path.of(stored == null ? "" : stored));
+    }
+
+    private void startConnector(InputStream in, OutputStream out) {
+	var client = new BSLLanguageClient();
+	connector = new BSLConnector(client, in, out);
+	connector.startInThread();
+	plugin.sleepCurrentThread(2000);
+	connector.initialize();
+    }
+
+    private void clear() {
+	process = null;
+	connector = null;
+	webSocketTransport = null;
+    }
+
+    private Optional<Path> findCachedArtifact(LaunchMode mode) {
+	return LsCache.findArtifact(plugin.getAppDir(), mode);
+    }
+
+    private String javaCommand() {
+	var command = preferenceStore.getString(BSLPreferencePage.PATH_TO_JAVA);
+	return command == null || command.isBlank() ? "java" : command;
     }
 }

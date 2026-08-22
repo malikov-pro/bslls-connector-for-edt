@@ -16,7 +16,6 @@
 
   <properties>
     <lombok.version>1.18.30</lombok.version>
-    <bsl.ls.version>1.0.5</bsl.ls.version>
   </properties>
 
   <dependencies>
@@ -52,28 +51,6 @@
                   <destFileName>lombok.jar</destFileName>
                 </artifactItem>
               </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.github.download-maven-plugin</groupId>
-        <artifactId>download-maven-plugin</artifactId>
-        <version>1.13.0</version>
-        <executions>
-          <execution>
-            <id>get-bsl-ls</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>wget</goal>
-            </goals>
-            <configuration>
-              <url>https://github.com/1c-syntax/bsl-language-server/releases/download/v${bsl.ls.version}/bsl-language-server-${bsl.ls.version}-exec.jar</url>
-              <outputDirectory>${project.basedir}/lib</outputDirectory>
-              <outputFileName>bsl-language-server-exec.jar</outputFileName>
-              <overwrite>false</overwrite>
-              <skipCache>false</skipCache>
-              <readTimeOut>600000</readTimeOut>
             </configuration>
           </execution>
         </executions>

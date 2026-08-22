@@ -19,6 +19,7 @@ import com.e1c.g5.v8.dt.check.ICheckParameters;
 import com.e1c.g5.v8.dt.check.components.BasicCheck;
 import com.e1c.g5.v8.dt.check.settings.IssueSeverity;
 import com.e1c.g5.v8.dt.check.settings.IssueType;
+import com.github.otymko.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
 
 public class BSLLsCheck extends BasicCheck<Void> {
@@ -57,7 +58,16 @@ public class BSLLsCheck extends BasicCheck<Void> {
 	    return;
 	}
 
-	var module = (Module) object;
+	plugin.getStatusService().beginBusy();
+	try {
+	    checkModule(plugin, connector, (Module) object, resultAcceptor, progressMonitor);
+	} finally {
+	    plugin.getStatusService().endBusy();
+	}
+    }
+
+    private void checkModule(BSLPlugin plugin, BSLConnector connector,
+	    Module module, ResultAcceptor resultAcceptor, IProgressMonitor progressMonitor) {
 	var node = NodeModelUtils.findActualNodeFor(module);
 	if (node == null) {
 	    return;

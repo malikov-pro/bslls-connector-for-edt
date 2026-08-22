@@ -1,48 +1,53 @@
 package com.github.otymko.dt.bsl.lsconnector.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.lsp4j.Range;
-import org.osgi.framework.FrameworkUtil;
 
 import com._1c.g5.v8.dt.bsl.ui.editor.BslXtextEditor;
 import com.github._1c_syntax.utils.Absolute;
-import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 
 public final class BSLCommon {
-    public static final String BUNDLED_LS_PATH = "lib/bsl-language-server-exec.jar";
 
     private BSLCommon() {
     }
 
-    public static Optional<Path> getBundledLanguageServerJar() {
-	var bundle = FrameworkUtil.getBundle(BSLCommon.class);
-	if (bundle == null) {
-	    return Optional.empty();
-	}
-	var url = FileLocator.find(bundle, new org.eclipse.core.runtime.Path(BUNDLED_LS_PATH), null);
-	if (url == null) {
-	    return Optional.empty();
-	}
-	try {
-	    var fileUrl = FileLocator.toFileURL(url);
-	    var path = Path.of(fileUrl.toURI());
-	    if (path.toFile().isFile()) {
-		return Optional.of(path);
+    public static String runAndReadOutput(List<String> command) throws IOException, InterruptedException {
+	return runAndReadOutput(command, 15);
+    }
+
+    public static String runAndReadOutput(List<String> command, int timeoutSeconds)
+	    throws IOException, InterruptedException {
+	var builder = new ProcessBuilder(command);
+	builder.redirectErrorStream(true);
+	var process = builder.start();
+	var output = new StringBuilder();
+	try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+	    String line;
+	    while ((line = reader.readLine()) != null) {
+		if (output.length() > 0) {
+		    output.append('\n');
+		}
+		output.append(line);
 	    }
-	} catch (IOException | URISyntaxException e) {
-	    BSLPlugin.createErrorStatus("Не удалось извлечь встроенный BSL Language Server", e);
 	}
-	return Optional.empty();
+	if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+	    process.destroyForcibly();
+	    throw new IOException("Команда не завершилась за " + timeoutSeconds + " с: " + command);
+	}
+	return output.toString().trim();
     }
 
     public static Optional<Path> getConfigurationFileFromWorkspace(Path pathToWorkspace) throws IOException {

@@ -1,4 +1,4 @@
-# Коннектор BSLLS для 1С:EDT
+# Коннектор BSL LS для 1С:EDT
 
 Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/).
 Это добавляет `128+` [диагностик](https://1c-syntax.github.io/bsl-language-server/diagnostics/).
@@ -24,13 +24,17 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 ### Первый запуск
 
-BSL Language Server (`*-exec.jar`) входит в плагин на этапе Maven-сборки. Отдельная загрузка с GitHub не нужна.
+Плагин **не** кладёт BSL Language Server в p2 и **не** качает его при старте EDT. Дистрибутив native/jar берётся из рабочей папки `~/.bsl-connector-for-edt` (один слот на режим). Если слот пуст, в настройках показывается список из пяти последних релизов GitHub — загрузка только после выбора.
 
-1. Откройте `Окно` → `Параметры` → `Коннектор BSLLS`.
-2. **Команда Java** — `java` из PATH (для BSL LS 1.x нужна **Java 21+**; JVM самой EDT 2025.2 — 17, её указывать не надо).
-3. **Путь к BSL LS** оставьте пустым, чтобы использовать встроенный jar.
+1. Откройте `Окно` → `Параметры` → `Коннектор BSL LS`.
+2. Выберите режим запуска:
+   * **Нативный** — zip под ОС (`_win.zip` / `_nix.zip` / `_mac.zip`), без отдельной Java.
+   * **JAR** — `*-exec.jar`. **Команда Java** из PATH; для BSL LS 1.x нужна **Java 21+** (JVM EDT 17 не подходит).
+   * **WebSocket** — только URL, по умолчанию `ws://localhost:8025/lsp`. Кэш и GitHub не используются. Контейнер поднимается отдельно, см. [docker/README.md](docker/README.md).
+3. Если кэша нет — выберите релиз и нажмите **Скачать**. Новая загрузка затирает предыдущий слот. Своего файла через «Обзор» нет.
+4. **Применить** — плагин перезапустит подключение к LS.
 
-Для настройки проверки используется файл [.bsl-language-server.json](https://1c-syntax.github.io/bsl-language-server/features/ConfigurationFile/).
+Для настройки проверки используется файл [.bsl-language-server.json](https://1c-syntax.github.io/bsl-language-server/features/ConfigurationFile/) (ключ `-c` / `--configuration` только для native и jar).
 
 Шаблон файла `.bsl-language-server.json` можно взять [example/.bsl-language-server.json](/example/.bsl-language-server.json).
 
@@ -44,8 +48,12 @@ BSL Language Server (`*-exec.jar`) входит в плагин на этапе 
 
 ### Установка из архива
 
-Аналогична установке по адресу.
-При выполнении шага 2 нажмите `Архив`.
+1. `Справка` → `Установить новое ПО` → `Добавить` → `Архив`.
+2. Укажите zip:
+   `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/com.github.otymko.dt.bsl.lsconnector.repository-0.3.0-SNAPSHOT.zip`
+3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
+4. Если стоит старая версия коннектора: `Справка` → `О программе` → `Сведения об установке` → удалите `BSL LS connector for EDT`, затем ставьте заново из этого zip.
+5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
 
 ## Разработчикам
 

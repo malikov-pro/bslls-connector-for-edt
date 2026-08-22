@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Connector BSLLS
+Bundle-Name: Connector BSL LS
 Bundle-SymbolicName: com.github.otymko.dt.bsl.lspconnector;singleton:=true
 Bundle-Version: 0.3.0.qualifier
 Bundle-Activator: com.github.otymko.dt.bsl.lsconnector.BSLPlugin
@@ -14,6 +14,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.text,
  org.eclipse.ui,
+ org.eclipse.jface,
+ org.eclipse.swt,
  org.eclipse.xtext.ui,
  com.github.1c-syntax.utils,
  org.eclipse.lsp4j.jsonrpc
