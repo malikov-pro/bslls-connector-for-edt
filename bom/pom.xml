@@ -27,7 +27,23 @@
 
     <maven.build.timestamp.format>'v'yyyyMMdd-HHmm</maven.build.timestamp.format>
     <qualifier>${maven.build.timestamp}</qualifier>
+
+    <tycho.localArtifacts>ignore</tycho.localArtifacts>
+    <tycho.resolver.classic>false</tycho.resolver.classic>
+    <tycho.baseline.skip>true</tycho.baseline.skip>
+
+    <!-- default = EDT 2025.2; override with -Pedt-2026.1 -->
+    <edt.target.artifact>default</edt.target.artifact>
   </properties>
+
+  <profiles>
+    <profile>
+      <id>edt-2026.1</id>
+      <properties>
+        <edt.target.artifact>edt-2026.1</edt.target.artifact>
+      </properties>
+    </profile>
+  </profiles>
 
   <build>
     <pluginManagement>
@@ -41,7 +57,7 @@
             <target>
               <artifact>
                 <groupId>com.github.otymko.dt.bsl.lsconnector</groupId>
-                <artifactId>default</artifactId>
+                <artifactId>${edt.target.artifact}</artifactId>
                 <version>0.3.0-SNAPSHOT</version>
               </artifact>
             </target>

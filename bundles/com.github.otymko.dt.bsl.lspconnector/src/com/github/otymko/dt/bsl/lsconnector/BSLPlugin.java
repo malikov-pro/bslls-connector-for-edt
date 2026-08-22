@@ -22,30 +22,58 @@ import com.github.otymko.dt.bsl.lsconnector.service.WindowsEventService;
 import com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage;
 import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
 
-import lombok.Getter;
-
 public class BSLPlugin extends Plugin {
     public static final String PLUGIN_ID = "com.github.otymko.dt.bsl.ls_connector";
-    @Getter
     private Set<String> workbenchParts = Collections.synchronizedSet(new HashSet<>());
-    @Getter
     private static BSLPlugin plugin;
-    @Getter
     protected static BundleContext context;
-    @Getter
     private WindowsEventService windowsEventService;
-    @Getter
     private LSService lsService;
-    @Getter
     private Path appDir;
-    @Getter
     private Path pathToImageApp;
-    @Getter
     private Path pathToWorkspace;
-    @Getter
     private Optional<Path> pathToConfiguration;
-    @Getter
     private ScopedPreferenceStore preferenceStore;
+
+    public Set<String> getWorkbenchParts() {
+	return workbenchParts;
+    }
+
+    public static BSLPlugin getPlugin() {
+	return plugin;
+    }
+
+    public static BundleContext getContext() {
+	return context;
+    }
+
+    public WindowsEventService getWindowsEventService() {
+	return windowsEventService;
+    }
+
+    public LSService getLsService() {
+	return lsService;
+    }
+
+    public Path getAppDir() {
+	return appDir;
+    }
+
+    public Path getPathToImageApp() {
+	return pathToImageApp;
+    }
+
+    public Path getPathToWorkspace() {
+	return pathToWorkspace;
+    }
+
+    public Optional<Path> getPathToConfiguration() {
+	return pathToConfiguration;
+    }
+
+    public ScopedPreferenceStore getPreferenceStore() {
+	return preferenceStore;
+    }
 
     public static IStatus createErrorStatus(String message, Throwable throwable) {
 	return new Status(IStatus.ERROR, PLUGIN_ID, 0, message, throwable);
@@ -93,7 +121,6 @@ public class BSLPlugin extends Plugin {
     }
 
     private void startLS() {
-	BSLCommon.downloadBSLLS(pathToImageApp);
 	lsService.start();
     }
 
@@ -122,8 +149,9 @@ public class BSLPlugin extends Plugin {
 
     private void initPreferenceStore() {
 	preferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE, PLUGIN_ID);
-	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_BSLLS, plugin.getPathToImageApp().toString());
-	preferenceStore.setDefault(BSLPreferencePage.EXTERNAL_JAR, false);
+	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_BSLLS,
+		pathToImageApp == null ? "" : pathToImageApp.toString());
+	preferenceStore.setDefault(BSLPreferencePage.EXTERNAL_JAR, true);
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
     }
@@ -147,14 +175,6 @@ public class BSLPlugin extends Plugin {
 	if (!appDir.toFile().exists()) {
 	    appDir.toFile().mkdir();
 	}
-
-	// проверим есть ли image app BSL LS
-	var pathToApp = Path.of(appDir.toString(), "bsl-language-server").toFile();
-	if (!pathToApp.exists()) {
-	    pathToApp.mkdir();
-	}
-
-	// путь к image app
-	pathToImageApp = Path.of(pathToApp.toString(), "bsl-language-server.exe");
+	pathToImageApp = BSLCommon.getBundledLanguageServerJar().orElse(null);
     }
 }

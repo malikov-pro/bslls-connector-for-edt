@@ -8,6 +8,17 @@
       </externalValidator>
    </extension>
    <extension
+         point="com.e1c.g5.v8.dt.check.checks">
+      <category
+            id="com.github.otymko.dt.bsl.lsconnector.checks"
+            title="BSL Language Server">
+      </category>
+      <check
+            category="com.github.otymko.dt.bsl.lsconnector.checks"
+            class="com.github.otymko.dt.bsl.lsconnector.BSLLsCheck">
+      </check>
+   </extension>
+   <extension
          point="org.eclipse.ui.preferencePages">
       <page
             class="com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage"

@@ -24,12 +24,11 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 ### Первый запуск
 
-При первом запуске нужно загрузить BSL LS.
-1. Откройте  `Окно` -> `Параметры`.
-2. Перейдите на вкладку `Коннектор BSLLS`.
-3. Убедитесь что запущено задание `Загрузка BSL LS`.
+BSL Language Server (`*-exec.jar`) входит в плагин на этапе Maven-сборки. Отдельная загрузка с GitHub не нужна.
 
-Загрузка выполняется в каталог `%USER_HOME%/.bsl-connector-for-edt/bsl-language-server`.
+1. Откройте `Окно` → `Параметры` → `Коннектор BSLLS`.
+2. **Команда Java** — `java` из PATH (для BSL LS 1.x нужна **Java 21+**; JVM самой EDT 2025.2 — 17, её указывать не надо).
+3. **Путь к BSL LS** оставьте пустым, чтобы использовать встроенный jar.
 
 Для настройки проверки используется файл [.bsl-language-server.json](https://1c-syntax.github.io/bsl-language-server/features/ConfigurationFile/).
 
@@ -56,6 +55,18 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 * Maven 3.9+
 * Доступ к репозиторию EDT (credentials в `bom/settings.xml`)
 * Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
+
+### Целевая платформа в EDT
+
+`Reload Target Platform` есть только в **EDT для разработки плагинов** (PDE). В обычном EDT с конфигурациями 1С этого пункта нет: туда ставится уже собранный p2 (`Справка` → `Установить новое ПО`).
+
+В PDE-workspace:
+
+1. Вид **Project Explorer** (не Package Explorer).
+2. Проект `default` → файл `default.target` (EDT 2025.2 + Eclipse 2025-12). Для 2026.1 — `targets/edt-2026.1/edt-2026.1.target`.
+3. Либо **Окно → Параметры → Plug-in Development → Target Platform** → **Add** → **Workspace**.
+
+Target Editor этой PDE не открывает `<location type="Maven">` (lombok/utils). Для компиляции в IDE достаточно **Running Platform**, если в ней есть бандлы `com._1c.g5.v8.dt.*`.
 
 ### Локальная сборка
 
@@ -86,4 +97,13 @@ set MAVEN_OPTS=-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLi
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
+По умолчанию сборка идёт против EDT **2025.2**. Для EDT **2026.1**:
+
+```bash
+mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
+```
+
+Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. 2025.2 берёт LSP4J 0.23.1, 2026.1 — LSP4J 1.0.0.
+
 Результат сборки — p2-репозиторий в `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/`.
+Ставьте этот репозиторий в ту EDT, под которую собирали.

@@ -28,13 +28,13 @@ public class BSLPreferencePage extends FieldEditorPreferencePage implements IWor
     protected void createFieldEditors() {
 	var parent = getFieldEditorParent();
 
-	var pathToJava = new StringFieldEditor(PATH_TO_JAVA, "Путь к JAVA", parent);
+	var pathToJava = new StringFieldEditor(PATH_TO_JAVA, "Команда Java (21+ для встроенного BSL LS)", parent);
 	addField(pathToJava);
 
-	var pathToBSLLS = new FileFieldEditor(PATH_TO_BSLLS, "Путь к BSL LS", parent);
+	var pathToBSLLS = new FileFieldEditor(PATH_TO_BSLLS, "Путь к BSL LS (пусто — встроенный jar)", parent);
 	addField(pathToBSLLS);
 
-	var externalJar = new BooleanFieldEditor(EXTERNAL_JAR, "Использовать внешний JAR", parent);
+	var externalJar = new BooleanFieldEditor(EXTERNAL_JAR, "Запускать как JAR (java -jar)", parent);
 	addField(externalJar);
 	
 	var javaOpts = new StringFieldEditor(JAVA_OPTS, "Java Opts", parent);

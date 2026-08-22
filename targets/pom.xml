@@ -17,5 +17,6 @@
 
   <modules>
     <module>default</module>
+    <module>edt-2026.1</module>
   </modules>
 </project>

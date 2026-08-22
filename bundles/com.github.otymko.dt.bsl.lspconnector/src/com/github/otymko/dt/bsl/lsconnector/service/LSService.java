@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
@@ -12,16 +11,18 @@ import com.github.otymko.dt.bsl.lsconnector.BSLPlugin;
 import com.github.otymko.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.otymko.dt.bsl.lsconnector.lsp.BSLLanguageClient;
 import com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage;
-
-import lombok.Getter;
+import com.github.otymko.dt.bsl.lsconnector.util.BSLCommon;
 
 public class LSService {
     private final BSLPlugin plugin;
     private final WindowsEventService windowsEventService;
     private final ScopedPreferenceStore preferenceStore;
     private Process process;
-    @Getter
     private BSLConnector connector;
+
+    public BSLConnector getConnector() {
+	return connector;
+    }
     
     public LSService(BSLPlugin plugin) {
 	this.plugin = plugin;
@@ -58,20 +59,30 @@ public class LSService {
     private void createProcess() {
 	var pathToConfiguration = plugin.getPathToConfiguration();
 	var pathToWorkspace = plugin.getPathToWorkspace();
-	var externalJar = preferenceStore.getBoolean(BSLPreferencePage.EXTERNAL_JAR);
-	var isImageApp = !externalJar;
 	var pathToLSP = getPathToBSLLS();
 
-	if (!pathToLSP.toFile().exists()) {
+	if (!pathToLSP.toFile().isFile()) {
+	    BSLPlugin.createWarningStatus("BSL Language Server не найден: " + pathToLSP);
 	    return;
 	}
 
+	var launchAsJar = preferenceStore.getBoolean(BSLPreferencePage.EXTERNAL_JAR)
+		|| pathToLSP.toString().endsWith(".jar");
+
 	List<String> arguments = new ArrayList<>();
-	if (!isImageApp) {
+	if (launchAsJar) {
 	    arguments.add(preferenceStore.getString(BSLPreferencePage.PATH_TO_JAVA));
+	    var javaOpts = preferenceStore.getString(BSLPreferencePage.JAVA_OPTS);
+	    if (javaOpts != null && !javaOpts.isBlank()) {
+		for (var opt : javaOpts.trim().split("\\s+")) {
+		    if (!opt.isEmpty()) {
+			arguments.add(opt);
+		    }
+		}
+	    }
 	    arguments.add("-jar");
 	}
-	arguments.add("\"" + pathToLSP.toString() + "\"");
+	arguments.add(pathToLSP.toString());
 
 	if (pathToConfiguration.isPresent()) {
 	    arguments.add("--configuration");
@@ -111,6 +122,13 @@ public class LSService {
     }
     
     private Path getPathToBSLLS() {
-	return Path.of(Optional.of(preferenceStore.getString(BSLPreferencePage.PATH_TO_BSLLS)).orElse(""));
+	var stored = preferenceStore.getString(BSLPreferencePage.PATH_TO_BSLLS);
+	if (stored != null && !stored.isBlank()) {
+	    var path = Path.of(stored);
+	    if (path.toFile().isFile()) {
+		return path;
+	    }
+	}
+	return BSLCommon.getBundledLanguageServerJar().orElse(Path.of(stored == null ? "" : stored));
     }
 }

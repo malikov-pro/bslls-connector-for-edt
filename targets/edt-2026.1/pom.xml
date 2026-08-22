@@ -12,10 +12,10 @@
   </parent>
 
   <groupId>com.github.otymko.dt.bsl.lsconnector</groupId>
-  <artifactId>default</artifactId>
+  <artifactId>edt-2026.1</artifactId>
   <version>0.3.0-SNAPSHOT</version>
 
   <packaging>eclipse-target-definition</packaging>
 
-  <name>EDT 2025.2 Target</name>
+  <name>EDT 2026.1 Target</name>
 </project>
