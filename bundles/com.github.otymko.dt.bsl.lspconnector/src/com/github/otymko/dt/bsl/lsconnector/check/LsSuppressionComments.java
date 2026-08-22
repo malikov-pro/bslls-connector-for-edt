@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Пара комментариев BSL LS вместо EDT {@code //@skip-check}.
+ * Удаление кодов BSL LS из комментария EDT {@code //@skip-check}.
  */
 public final class LsSuppressionComments {
     private static final Pattern SKIP_TAIL = Pattern.compile("(?i)//\\s*@skip-check\\s+([^\\r\\n]+)");
@@ -13,29 +13,48 @@ public final class LsSuppressionComments {
     private LsSuppressionComments() {
     }
 
-    public static String offComment(String canonicalCode) {
-	if (LsSkipCheck.ALL_LS.equals(canonicalCode)) {
-	    return "// BSLLS:off";
-	}
-	return "// BSLLS:" + canonicalCode + "-off";
-    }
-
-    public static String onComment(String canonicalCode) {
-	if (LsSkipCheck.ALL_LS.equals(canonicalCode)) {
-	    return "// BSLLS:on";
-	}
-	return "// BSLLS:" + canonicalCode + "-on";
-    }
-
     public static boolean looksLikeSkipCheckInsert(String text) {
-	return text != null && text.length() <= 400 && text.contains("@skip-check");
+	return text != null && text.contains("@skip-check");
     }
 
-    /**
-     * Заменяет строку {@code //@skip-check …} на комментарии BSL LS, оставляя
-     * коды EDT в {@code @skip-check}. Пустой список — нечего переписывать.
-     */
-    public static List<String> rewriteSkipLine(String line) {
+    public static String removeLsCodesFromSkipLine(String line) {
+	if (line == null) {
+	    return null;
+	}
+	var matcher = SKIP_TAIL.matcher(line);
+	if (!matcher.find()) {
+	    return line;
+	}
+	var payload = matcher.group(1);
+	int commentPart = payload.indexOf(" -");
+	if (commentPart >= 0) {
+	    payload = payload.substring(0, commentPart);
+	}
+	var edtCodes = new ArrayList<String>();
+	boolean hasLsCode = false;
+	for (String token : payload.split("[,\\s]+")) {
+	    if (token.isBlank()) {
+		continue;
+	    }
+	    var ls = LsSkipCheck.canonicalLsCode(token);
+	    if (ls != null) {
+		hasLsCode = true;
+	    } else {
+		edtCodes.add(token);
+	    }
+	}
+	if (!hasLsCode) {
+	    return line;
+	}
+	var before = line.substring(0, matcher.start()).stripTrailing();
+	if (edtCodes.isEmpty()) {
+	    return before;
+	}
+	var separator = before.isBlank() ? leadingWhitespace(line) : before + " ";
+	return separator + "//@skip-check " + String.join(", ", edtCodes);
+    }
+
+    public static List<String> lsCodesFromSkipLine(String line) {
 	if (line == null) {
 	    return List.of();
 	}
@@ -48,44 +67,11 @@ public final class LsSuppressionComments {
 	if (commentPart >= 0) {
 	    payload = payload.substring(0, commentPart);
 	}
-	var lsCodes = new ArrayList<String>();
-	var edtCodes = new ArrayList<String>();
-	for (String token : payload.split("[,\\s]+")) {
-	    if (token.isBlank()) {
-		continue;
-	    }
-	    var ls = LsSkipCheck.canonicalLsCode(token);
-	    if (ls != null) {
-		if (!lsCodes.contains(ls)) {
-		    lsCodes.add(ls);
-		}
-	    } else {
-		edtCodes.add(token);
-	    }
-	}
-	if (lsCodes.isEmpty()) {
-	    return List.of();
-	}
-	var indent = leadingWhitespace(line);
-	var lines = new ArrayList<String>();
-	if (!edtCodes.isEmpty()) {
-	    lines.add(indent + "//@skip-check " + String.join(", ", edtCodes));
-	}
-	for (String code : lsCodes) {
-	    lines.add(indent + offComment(code));
-	}
-	return lines;
-    }
-
-    public static List<String> lsCodesFromSkipLine(String line) {
-	var rewritten = rewriteSkipLine(line);
 	var codes = new ArrayList<String>();
-	for (String rewrittenLine : rewritten) {
-	    var trimmed = rewrittenLine.strip();
-	    if (trimmed.startsWith("// BSLLS:off")) {
-		codes.add(LsSkipCheck.ALL_LS);
-	    } else if (trimmed.startsWith("// BSLLS:") && trimmed.endsWith("-off")) {
-		codes.add(trimmed.substring("// BSLLS:".length(), trimmed.length() - "-off".length()));
+	for (String token : payload.split("[,\\s]+")) {
+	    var code = LsSkipCheck.canonicalLsCode(token);
+	    if (code != null && !codes.contains(code)) {
+		codes.add(code);
 	    }
 	}
 	return codes;

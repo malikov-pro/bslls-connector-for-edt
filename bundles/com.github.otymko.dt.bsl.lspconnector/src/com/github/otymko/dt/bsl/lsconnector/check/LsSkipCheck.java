@@ -7,10 +7,11 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Подавление BSL LS — только регионы
+ * Подавление BSL LS — регионы
  * {@code // BSLLS:LineLength-off} … {@code // BSLLS:LineLength-on}
  * или {@code // BSLLS:off} … {@code // BSLLS:on}.
- * {@code //@skip-check} относится к проверкам EDT и BSL не глушит.
+ * Вставленный EDT {@code //@skip-check LineLength} удаляется и диагностику
+ * BSL LS не глушит.
  */
 public final class LsSkipCheck {
     public static final String ALL_LS = "bsl-ls";
@@ -29,7 +30,8 @@ public final class LsSkipCheck {
 	if (lineNumber1Based < 1 || lineNumber1Based > lines.length) {
 	    return false;
 	}
-	return isInsideBsllsOff(lines, lineNumber1Based - 1, checkId);
+	int index = lineNumber1Based - 1;
+	return isInsideBsllsOff(lines, index, checkId);
     }
 
     public static boolean isSkipped(Set<String> ids, String checkId) {

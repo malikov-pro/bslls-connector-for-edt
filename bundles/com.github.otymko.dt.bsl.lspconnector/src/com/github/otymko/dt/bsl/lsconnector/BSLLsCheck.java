@@ -28,7 +28,7 @@ public class BSLLsCheck extends BasicCheck<Void> {
     protected void configureCheck(CheckConfigurer configurationBuilder) {
 	configurationBuilder.title("Прочие диагностики BSL LS")
 		.description("Прочие диагностики BSL Language Server")
-		.complexity(CheckComplexity.COMPLEX)
+		.complexity(CheckComplexity.NORMAL)
 		.severity(IssueSeverity.MINOR)
 		.issueType(IssueType.CODE_STYLE)
 		.module()

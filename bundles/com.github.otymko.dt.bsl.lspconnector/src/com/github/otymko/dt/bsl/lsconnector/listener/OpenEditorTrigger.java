@@ -89,7 +89,10 @@ public class OpenEditorTrigger implements IPartListener2 {
 
     @Override
     public void partBroughtToTop(IWorkbenchPartReference partRef) {
-	// none
+	var part = partRef.getPart(false);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
     }
 
 }

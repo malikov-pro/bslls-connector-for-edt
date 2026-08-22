@@ -1,7 +1,6 @@
 package com.github.otymko.dt.bsl.lsconnector.listener;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.WeakHashMap;
 
 import org.eclipse.jface.text.BadLocationException;
@@ -20,8 +19,7 @@ import com.github.otymko.dt.bsl.lsconnector.check.LsSuppressionComments;
 
 /**
  * EDT для ICheck всегда пишет {@code //@skip-check}. Для кодов BSL LS
- * заменяем это на пару вокруг одной строки маркера:
- * {@code // BSLLS:Code-off} … строка … {@code // BSLLS:Code-on}.
+ * отменяем вставку, поэтому действие «Подавить» не меняет модуль.
  * {@code //@skip-check} типовых проверок EDT не трогаем.
  */
 public final class LsSkipCheckRewriter implements IDocumentListener {
@@ -29,6 +27,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 
     private final IDocument document;
     private boolean rewriting;
+    private boolean rewriteScheduled;
 
     private LsSkipCheckRewriter(IDocument document) {
 	this.document = document;
@@ -38,25 +37,22 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	if (editor == null) {
 	    return;
 	}
-	var document = editor.getDocument();
+	var document = editorDocument(editor);
 	if (document == null) {
+	    var display = display();
+	    if (display != null) {
+		display.asyncExec(() -> attachWhenReady(editor));
+	    }
 	    return;
 	}
-	synchronized (ATTACHED) {
-	    if (ATTACHED.containsKey(document)) {
-		return;
-	    }
-	    var listener = new LsSkipCheckRewriter(document);
-	    document.addDocumentListener(listener);
-	    ATTACHED.put(document, listener);
-	}
+	attachTo(document);
     }
 
     public static void detach(BslXtextEditor editor) {
 	if (editor == null) {
 	    return;
 	}
-	var document = editor.getDocument();
+	var document = editorDocument(editor);
 	if (document == null) {
 	    return;
 	}
@@ -91,73 +87,81 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	if (rewriting || event == null || !LsSuppressionComments.looksLikeSkipCheckInsert(event.getText())) {
 	    return;
 	}
-	if (LsSkipCheck.skipCheckIds(event.getText()).stream().noneMatch(LsSkipCheck::isLsCheckId)) {
+	var text = event.getText();
+	boolean smallInsert = text.length() < 500;
+	if (smallInsert && LsSkipCheck.skipCheckIds(text).stream().noneMatch(LsSkipCheck::isLsCheckId)) {
 	    return;
 	}
-	int offset = event.getOffset();
+	scheduleRewrite(event.getOffset(), text.length());
+    }
+
+    private void scheduleRewrite(int offset, int length) {
 	var display = display();
 	if (display == null) {
 	    return;
 	}
-	display.asyncExec(() -> rewriteInsertedSkip(offset));
+	synchronized (this) {
+	    if (rewriteScheduled) {
+		return;
+	    }
+	    rewriteScheduled = true;
+	}
+	display.asyncExec(() -> {
+	    synchronized (this) {
+		rewriteScheduled = false;
+	    }
+	    rewriteSkipChecks(offset, length);
+	});
     }
 
-    private void rewriteInsertedSkip(int offset) {
+    private void rewriteSkipChecks(int offset, int length) {
 	if (rewriting) {
 	    return;
 	}
 	try {
-	    int skipLine = document.getLineOfOffset(Math.min(offset, document.getLength()));
-	    int skipOffset = document.getLineOffset(skipLine);
-	    int skipLength = document.getLineLength(skipLine);
-	    var delimiter = document.getLineDelimiter(skipLine);
-	    int skipContent = delimiter == null ? skipLength : skipLength - delimiter.length();
-	    var skipText = document.get(skipOffset, skipContent);
-	    var lsCodes = LsSuppressionComments.lsCodesFromSkipLine(skipText);
-	    if (lsCodes.isEmpty()) {
-		return;
+	    int last = document.getNumberOfLines() - 1;
+	    int startLine;
+	    int endLine;
+	    if (length >= 500) {
+		startLine = 0;
+		endLine = last;
+	    } else {
+		int start = Math.max(0, Math.min(offset, document.getLength()));
+		int end = Math.max(start, Math.min(offset + Math.max(length, 0), document.getLength()));
+		startLine = Math.max(0, document.getLineOfOffset(start) - 1);
+		endLine = Math.min(last, document.getLineOfOffset(end));
 	    }
-	    int markedLine = nextContentLine(skipLine + 1);
-	    var indent = lineIndent(markedLine >= 0 ? markedLine : skipLine, skipText);
-	    var offLines = reindent(LsSuppressionComments.rewriteSkipLine(skipText), indent);
-	    if (offLines.isEmpty()) {
-		return;
-	    }
-	    var lineDelim = delimiter == null ? System.lineSeparator() : delimiter;
-	    var replacement = join(offLines, lineDelim);
-	    int markedEnd = markedLine >= 0 ? lineEndOffset(markedLine) : skipOffset + skipLength;
-	    var onBlock = onComments(lsCodes, indent, lineDelim);
-	    if (markedEnd < document.getLength() && !endsWithLineBreak(markedEnd, lineDelim)) {
-		onBlock = lineDelim + onBlock;
+	    var skipLines = new ArrayList<Integer>();
+	    for (int line = startLine; line <= endLine; line++) {
+		if (!LsSuppressionComments.lsCodesFromSkipLine(lineText(line)).isEmpty()) {
+		    skipLines.add(line);
+		}
 	    }
 	    rewriting = true;
 	    try {
-		if (markedEnd >= skipOffset + skipLength) {
-		    document.replace(markedEnd, 0, onBlock);
-		} else {
-		    document.replace(skipOffset + skipContent, 0, lineDelim + onBlock);
+		for (int i = skipLines.size() - 1; i >= 0; i--) {
+		    rewriteOne(skipLines.get(i));
 		}
-		document.replace(skipOffset, skipContent, replacement);
 	    } finally {
 		rewriting = false;
 	    }
 	} catch (BadLocationException e) {
-	    BSLPlugin.createWarningStatus("Не удалось записать подавление BSL LS: " + e.getMessage(), e);
+	    BSLPlugin.createWarningStatus("Не удалось отменить подавление BSL LS: " + e.getMessage(), e);
 	}
     }
 
-    private int nextContentLine(int fromLine) throws BadLocationException {
-	int last = document.getNumberOfLines() - 1;
-	for (int line = fromLine; line <= last; line++) {
-	    if (!lineText(line).isBlank()) {
-		return line;
-	    }
+    private void rewriteOne(int skipLine) throws BadLocationException {
+	int skipOffset = document.getLineOffset(skipLine);
+	int skipLength = document.getLineLength(skipLine);
+	var delimiter = document.getLineDelimiter(skipLine);
+	int skipContent = delimiter == null ? skipLength : skipLength - delimiter.length();
+	var skipText = document.get(skipOffset, skipContent);
+	var replacement = LsSuppressionComments.removeLsCodesFromSkipLine(skipText);
+	if (replacement == null || replacement.equals(skipText)) {
+	    return;
 	}
-	return -1;
-    }
-
-    private int lineEndOffset(int line) throws BadLocationException {
-	return document.getLineOffset(line) + document.getLineLength(line);
+	int replacedLength = replacement.isBlank() ? skipLength : skipContent;
+	document.replace(skipOffset, replacedLength, replacement);
     }
 
     private String lineText(int line) throws BadLocationException {
@@ -168,48 +172,35 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	return content <= 0 ? "" : document.get(offset, content);
     }
 
-    private String lineIndent(int line, String fallbackLine) throws BadLocationException {
-	if (line >= 0 && line < document.getNumberOfLines()) {
-	    var text = lineText(line);
-	    if (!text.isBlank()) {
-		return LsSuppressionComments.leadingWhitespace(text);
+    private static void attachWhenReady(BslXtextEditor editor) {
+	if (editor == null || editor.getEditorInput() == null) {
+	    return;
+	}
+	var document = editorDocument(editor);
+	if (document != null) {
+	    attachTo(document);
+	}
+    }
+
+    private static void attachTo(IDocument document) {
+	synchronized (ATTACHED) {
+	    if (ATTACHED.containsKey(document)) {
+		return;
 	    }
+	    var listener = new LsSkipCheckRewriter(document);
+	    document.addDocumentListener(listener);
+	    ATTACHED.put(document, listener);
 	}
-	return LsSuppressionComments.leadingWhitespace(fallbackLine);
     }
 
-    private static List<String> reindent(List<String> lines, String indent) {
-	var result = new ArrayList<String>();
-	for (String line : lines) {
-	    result.add(indent + line.stripLeading());
+    private static IDocument editorDocument(BslXtextEditor editor) {
+	var document = editor.getDocument();
+	if (document != null) {
+	    return document;
 	}
-	return result;
-    }
-
-    private static String join(List<String> lines, String delimiter) {
-	var builder = new StringBuilder();
-	for (int i = 0; i < lines.size(); i++) {
-	    if (i > 0) {
-		builder.append(delimiter);
-	    }
-	    builder.append(lines.get(i));
-	}
-	return builder.toString();
-    }
-
-    private static String onComments(List<String> codes, String indent, String delimiter) {
-	var builder = new StringBuilder();
-	for (int i = codes.size() - 1; i >= 0; i--) {
-	    builder.append(indent).append(LsSuppressionComments.onComment(codes.get(i))).append(delimiter);
-	}
-	return builder.toString();
-    }
-
-    private boolean endsWithLineBreak(int offset, String delimiter) throws BadLocationException {
-	if (offset <= 0 || delimiter == null || delimiter.isEmpty() || offset < delimiter.length()) {
-	    return false;
-	}
-	return delimiter.equals(document.get(offset - delimiter.length(), delimiter.length()));
+	var provider = editor.getDocumentProvider();
+	var input = editor.getEditorInput();
+	return provider == null || input == null ? null : provider.getDocument(input);
     }
 
     private static Display display() {

@@ -15,9 +15,9 @@ import com.e1c.g5.v8.dt.check.settings.IssueType;
 
 /**
  * Одна диагностика BSL LS как отдельная проверка EDT. Код проверки совпадает
- * с ключом LS ({@code LineLength}). «Подавить» ставит пару вокруг строки
- * маркера: {@code // BSLLS:LineLength-off} … {@code // BSLLS:LineLength-on}.
- * {@code //@skip-check} относится к проверкам EDT и эту диагностику не глушит.
+ * с ключом LS ({@code LineLength}). Встроенный пункт EDT «Подавить» скрыть
+ * для отдельной проверки нельзя, поэтому вставляемый им {@code //@skip-check}
+ * с кодом LS удаляется без изменения модуля.
  * «Открыть проверку» открывает карточку со ссылкой на
  * {@code https://v8std.ru/diagnostics/bslls/LineLength/}.
  */
@@ -46,7 +46,7 @@ public class BslLsDiagnosticCheck extends BasicCheck<Void> implements IExecutabl
 	var issueType = info == null ? IssueType.CODE_STYLE : info.getIssueType();
 	configurationBuilder.title(title)
 		.description(description)
-		.complexity(CheckComplexity.COMPLEX)
+		.complexity(CheckComplexity.NORMAL)
 		.severity(severity)
 		.issueType(issueType)
 		.module()
