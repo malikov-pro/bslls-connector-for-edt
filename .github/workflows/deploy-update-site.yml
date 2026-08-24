@@ -48,10 +48,7 @@ jobs:
       # XML-entity лимиты приходят из connector/.mvn/jvm.config
       - name: Сборка
         working-directory: connector
-        run: |
-          mvn -q dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
-          export MAVEN_OPTS="-javaagent:$PWD/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
-          mvn -B clean verify -T 1C -Dtycho.localArtifacts=ignore
+        run: mvn -B clean verify -T 1C -Dtycho.localArtifacts=ignore
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}

@@ -19,3 +19,6 @@ connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
 /connector/targets/*/.project
 /connector/targets/.settings/
 /connector/.metadata/
+/_edt
+/connector/targets/local-*.target
+/connector/targets/local-p2/

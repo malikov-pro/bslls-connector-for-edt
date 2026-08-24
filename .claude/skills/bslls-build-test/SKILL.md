@@ -1,6 +1,6 @@
 ---
 name: bslls-build-test
-description: Как собрать плагин bslls-connector-for-edt (Maven/Tycho) локально через compile.sh, получить p2-zip и установить его в EDT 2025.2. Использовать при сборке, проверке изменений перед коммитом, ошибках «cannot find symbol» (lombok) или проблемах установки p2.
+description: Как собрать плагин bslls-connector-for-edt (Maven/Tycho) локально через compile.sh, получить p2-zip и установить его в EDT 2025.2. Использовать при сборке, проверке изменений перед коммитом или проблемах установки p2.
 ---
 
 # Сборка и установка
@@ -25,15 +25,13 @@ description: Как собрать плагин bslls-connector-for-edt (Maven/T
 Единственный канонический вход — скрипт в корне:
 
 ```bash
-bash compile.sh                     # lombok + mvn clean verify -T 1C + путь к zip
-bash compile.sh --skip-lombok-copy  # если lombok.jar уже скачан
+bash compile.sh                     # mvn clean verify -T 1C + путь к zip
 bash compile.sh --profile edt-2026.1
 ```
 
-Скрипт сам: подхватывает `bom/edt-credentials.env`, скачивает lombok
-(`dependency:copy@get-lombok`) и ставит `-javaagent:<…>/lombok.jar=ECJ` в
-`MAVEN_OPTS`. XML-entity лимиты приходят из `connector/.mvn/jvm.config` автоматически —
-MAVEN_OPTS руками не задавать.
+Скрипт сам: подхватывает `connector/bom/edt-credentials.env`, запускает сборку
+(entity-лимиты из `connector/.mvn/jvm.config`) и обновляет стабильный каталог
+`connector/targets/local-p2/` для IDE-таргета.
 
 - Toolchain можно передать явно: `--java-home <JDK17+>` / `--maven-home <Maven>`.
   Точные пути машинно-специфичны — искать на месте, не хардкодить.
@@ -42,9 +40,6 @@ MAVEN_OPTS руками не задавать.
 - Первая сборка медленная: Tycho тянет p2 EDT (`edt.1c.ru`) и Eclipse SDK
   (сотни МБ) в `~/.m2/repository/p2`. Дальше — минуты.
 - Нет сети/креденшеллов → сборка честно падает; не выдавать «зелёный» за факт.
-- Симптом «cannot find symbol» на геттерах/билдерах = не прикрепился lombok-agent:
-  проверить MAVEN_OPTS (его перезаписал кто-то снаружи?), запустить без
-  `--skip-lombok-copy`.
 
 ## Результат и установка в тестовую EDT
 

@@ -21,8 +21,7 @@ description: Финальные ворота «определение готов
 
 2. **Сборка** — `bash compile.sh` → BUILD SUCCESS, zip со свежим квалификатором.
    Для ветки 2026.1 дополнительно: `bash compile.sh --profile edt-2026.1`.
-   Симптомы-маркеры: «cannot find symbol» = lombok-agent отвалился;
-   ошибки XML-entity = сборка запущена мимо `.mvn/jvm.config`.
+   Симптом-маркер: ошибки XML-entity = сборка запущена мимо `connector/.mvn/jvm.config`.
 
 3. **Контракты из CLAUDE.md** — глазами по diff'у:
    `[BSL LS] ` префикс на месте; версии пакетов в MANIFEST.MF не зафиксированы;

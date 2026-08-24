@@ -63,6 +63,8 @@ public class BSLConnector {
 	thread.start();
     }
 
+    // setRootUri(String) устарел только в lsp4j 1.0.0; URI-перегрузки в 0.23.1 (EDT 2025.2) нет.
+    @SuppressWarnings("deprecation")
     public CompletableFuture<InitializeResult> initialize() {
 	var rootUri = BSLCommon.uri(BSLPlugin.getPlugin().getPathToWorkspace().toUri());
 

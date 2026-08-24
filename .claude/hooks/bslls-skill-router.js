@@ -68,7 +68,7 @@ function main() {
 
   // Сборка
   if (/^(compile\.sh|pom\.xml|jvm\.config)$/.test(base) || /\/bom\/(pom\.xml|settings\.xml)$/.test(p)) {
-    tips.push('сборка — через bash compile.sh (lombok-javaagent, .mvn/jvm.config уже подключены); см. /bslls-build-test');
+    tips.push('сборка — через bash compile.sh (entity-лимиты из connector/.mvn/jvm.config); см. /bslls-build-test');
   }
 
   if (tips.length === 0) process.exit(0);

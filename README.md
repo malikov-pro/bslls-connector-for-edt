@@ -90,7 +90,6 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 * JDK 17+
 * Maven 3.9+ (Tycho 4.0.5 на 3.8.x падает «requires Maven version 3.9.0»)
 * Доступ к репозиторию EDT (credentials в `connector/bom/settings.xml`)
-* Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
 * Сабмодуль [zeegin/v8std](https://github.com/zeegin/v8std): `git clone --recurse-submodules …` или `git submodule update --init third_party/v8std`
 
 ### Целевая платформа в EDT
@@ -103,12 +102,13 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 2. Проект `default` (в `connector/targets/default/`) → файл `default.target` (EDT 2025.2 + Eclipse 2025-12). Для 2026.1 — `connector/targets/edt-2026.1/edt-2026.1.target`.
 3. Либо **Окно → Параметры → Plug-in Development → Target Platform** → **Add** → **Workspace**.
 
-Target Editor этой PDE не открывает `<location type="Maven">` (lombok/utils). Для компиляции в IDE достаточно **Running Platform**, если в ней есть бандлы `com._1c.g5.v8.dt.*`.
+Target Editor этой PDE не открывает `<location type="Maven">` (utils). Для компиляции в IDE используйте локальный таргет `connector/targets/local-edt-2025.2.target` (p2-локации + стабильный каталог `connector/targets/local-p2/`, который обновляет `compile.sh`) и «Set as Active Target Platform».
 
 ### Локальная сборка
 
-> Канонический путь — скрипт в корне репозитория: он сам скачивает lombok,
-> ставит javaagent и entity-лимиты (`.mvn/jvm.config`) и печатает путь к p2-zip.
+> Канонический путь — скрипт в корне репозитория: он запускает сборку
+> (entity-лимиты берёт из `connector/.mvn/jvm.config`), обновляет стабильный
+> каталог `connector/targets/local-p2/` для IDE-таргета и печатает путь к p2-zip.
 
 ```bash
 bash compile.sh
@@ -118,20 +118,12 @@ bash compile.sh --profile edt-2026.1
 
 Ниже — те же шаги вручную (например, для Windows без bash):
 
-> `tycho-compiler-plugin` не умеет обрабатывать аннотации `lombok` вне Eclipse IDE,
-> поэтому `lombok.jar` подключается как `-javaagent` через `MAVEN_OPTS`.
-
-> XML-entity лимиты уже заданы в `.mvn/jvm.config` — Maven подхватывает их сам.
+> XML-entity лимиты уже заданы в `connector/.mvn/jvm.config` — Maven подхватывает их сам.
 
 #### Linux / macOS
 
 ```bash
 cd connector
-# 1. Скачайте lombok
-mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
-
-# 2. Соберите проект
-export MAVEN_OPTS="-javaagent:$(pwd)/connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
@@ -139,11 +131,6 @@ mvn verify -Dtycho.localArtifacts=ignore
 
 ```bat
 cd connector
-rem 1. Скачайте lombok
-mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
-
-rem 2. Соберите проект
-set MAVEN_OPTS=-javaagent:%cd%\connector\bundles\com.github.malikov-pro.dt.bsl.lspconnector\target\lombok.jar=ECJ
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
