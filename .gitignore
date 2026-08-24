@@ -11,3 +11,10 @@ bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
 
 # Локальные клоны для анализа (не часть проекта)
 /_source/
+
+# Служебные проекты агрегаторов от импорта в Eclipse/PDE (m2e)
+/bundles/.project
+/features/.project
+/repositories/.project
+/targets/*/.project
+/targets/.settings/
