@@ -169,10 +169,6 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	if (service.getLaunchMode() == LaunchMode.WEBSOCKET) {
 	    return (running ? "BSL LS ws" : "BSL LS") + suffix;
 	}
-	var version = service.getCachedLsVersion();
-	if (version != null && !version.isBlank()) {
-	    return "BSL LS " + version + suffix;
-	}
 	return (running ? "BSL LS" : "BSL LS") + suffix;
     }
 
@@ -182,11 +178,7 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	}
 	var mode = modeLabel(service.getLaunchMode());
 	var state = busy ? "проверка" : running ? "запущен" : "не запущен";
-	var version = service.getCachedLsVersion();
 	var text = "Коннектор BSL LS · " + mode + " · " + state;
-	if (version != null && !version.isBlank()) {
-	    text += " · " + version;
-	}
 	var check = service.getLastCheck();
 	if (check != null) {
 	    text += "\n" + check.menuText();

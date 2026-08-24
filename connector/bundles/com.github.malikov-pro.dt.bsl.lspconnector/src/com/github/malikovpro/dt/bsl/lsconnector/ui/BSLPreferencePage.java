@@ -1,5 +1,6 @@
 package com.github.malikovpro.dt.bsl.lsconnector.ui;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,8 +49,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private Text javaCommandText;
     private Text javaOptsText;
     private Text websocketUrlText;
+    private Label javaStateLabel;
     private Label javaHintLabel;
-    private Label javaWarningLabel;
     private Label statusLabel;
     private Composite releaseRow;
     private Combo releaseCombo;
@@ -58,6 +59,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private Button checkButton;
     private Job listJob;
     private Job downloadJob;
+    private Job javaProbeJob;
+    private Job lsVersionJob;
     private List<GitHubRelease> releases = new ArrayList<>();
     private boolean replaceRequested;
 
@@ -104,22 +107,22 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	websocketRadio.addSelectionListener(modeListener);
 
 	jarComposite = new Composite(root, SWT.NONE);
-	jarComposite.setLayout(new GridLayout(2, false));
+	jarComposite.setLayout(new GridLayout(3, false));
 	jarComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
+	javaStateLabel = new Label(jarComposite, SWT.NONE);
+	javaStateLabel.setText("●");
+	javaStateLabel.setForeground(jarComposite.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
 	createLabel(jarComposite, "Команда Java:");
 	javaCommandText = createText(jarComposite);
 
 	javaHintLabel = new Label(jarComposite, SWT.WRAP);
-	javaHintLabel.setText("Для BSL LS 1.x нужна Java 21+ (JVM EDT 17 не подходит).");
-	var hintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
+	javaHintLabel.setText("Команда java для запуска BSL LS 1.x (нужна Java 21+; JVM EDT 17 не подходит).");
+	var hintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
 	hintData.widthHint = 420;
 	javaHintLabel.setLayoutData(hintData);
 
-	javaWarningLabel = new Label(jarComposite, SWT.WRAP);
-	javaWarningLabel.setLayoutData(hintData);
-	javaWarningLabel.setForeground(parent.getDisplay().getSystemColor(SWT.COLOR_DARK_RED));
-
+	new Label(jarComposite, SWT.NONE);
 	createLabel(jarComposite, "Java Opts:");
 	javaOptsText = createText(jarComposite);
 
@@ -218,6 +221,12 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	if (downloadJob != null) {
 	    downloadJob.cancel();
 	}
+	if (javaProbeJob != null) {
+	    javaProbeJob.cancel();
+	}
+	if (lsVersionJob != null) {
+	    lsVersionJob.cancel();
+	}
 	super.dispose();
     }
 
@@ -262,12 +271,11 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	parent.layout(true, true);
     }
 
-    private void refreshStatus() {
+	private void refreshStatus() {
 	if (statusLabel == null || statusLabel.isDisposed()) {
 	    return;
 	}
 	var mode = selectedMode();
-	javaWarningLabel.setText("");
 	if (mode == LaunchMode.WEBSOCKET) {
 	    statusLabel.setText("Локальный процесс и кэш не используются. Контейнер поднимается отдельно.");
 	    setReleaseControlsVisible(false, false);
@@ -275,19 +283,13 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	}
 
 	if (mode == LaunchMode.JAR) {
-	    probeJava();
+	    probeJavaAsync();
 	}
 
 	var artifact = LsCache.findArtifact(BSLPlugin.getPlugin().getAppDir(), mode);
 	if (artifact.isPresent() && !replaceRequested) {
 	    setReleaseControlsVisible(false, true);
-	    try {
-		var version = LsVersionProbe.languageServerVersion(artifact.get(), mode == LaunchMode.JAR,
-			javaCommandText.getText().trim(), javaOptsText.getText());
-		statusLabel.setText("Версия LS: " + (version.isEmpty() ? artifact.get().getFileName() : version));
-	    } catch (Exception e) {
-		statusLabel.setText("Дистрибутив найден, но не удалось выполнить version: " + e.getMessage());
-	    }
+	    probeLsVersionAsync(artifact.get(), mode);
 	    return;
 	}
 
@@ -301,18 +303,91 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	}
     }
 
-    private void probeJava() {
-	try {
-	    var output = LsVersionProbe.javaVersionOutput(javaCommandText.getText().trim());
-	    var major = LsVersionProbe.parseJavaMajor(output);
-	    var summary = output.isEmpty() ? "не удалось прочитать java -version" : LsVersionProbe.firstLine(output);
-	    javaHintLabel.setText("Java: " + summary + ". Для BSL LS 1.x нужна Java 21+ (JVM EDT 17 не подходит).");
-	    if (major.isPresent() && major.getAsInt() < LsVersionProbe.REQUIRED_JAVA_MAJOR) {
-		javaWarningLabel.setText("Текущая Java " + major.getAsInt() + " < 21. Для BSL LS 1.x нужна Java 21+.");
-	    }
-	} catch (Exception e) {
-	    javaHintLabel.setText("Не удалось выполнить java -version. Для BSL LS 1.x нужна Java 21+.");
+    private void probeJavaAsync() {
+	if (javaProbeJob != null) {
+	    javaProbeJob.cancel();
 	}
+	var display = jarComposite.getDisplay();
+	var command = javaCommandText.getText().trim();
+	setJavaState(display, SWT.COLOR_DARK_GRAY, "Проверяю Java…");
+	var job = new Job("Проверка команды Java") {
+	    @Override
+	    protected IStatus run(IProgressMonitor monitor) {
+		String message;
+		int colorId;
+		try {
+		    var output = LsVersionProbe.javaVersionOutput(command);
+		    var major = LsVersionProbe.parseJavaMajor(output);
+		    var summary = output.isEmpty() ? "вывод java -version пуст" : LsVersionProbe.firstLine(output);
+		    if (major.isPresent() && major.getAsInt() >= LsVersionProbe.REQUIRED_JAVA_MAJOR) {
+			colorId = SWT.COLOR_DARK_GREEN;
+			message = "Java " + summary + " — подходит для BSL LS 1.x.";
+		    } else if (major.isPresent()) {
+			colorId = SWT.COLOR_DARK_RED;
+			message = "Java " + major.getAsInt() + " — не подходит: для BSL LS 1.x нужна Java "
+				+ LsVersionProbe.REQUIRED_JAVA_MAJOR + "+.";
+		    } else {
+			colorId = SWT.COLOR_DARK_RED;
+			message = "Не удалось определить версию («" + summary + "»). Для BSL LS 1.x нужна Java "
+				+ LsVersionProbe.REQUIRED_JAVA_MAJOR + "+.";
+		    }
+		} catch (Exception e) {
+		    colorId = SWT.COLOR_DARK_RED;
+		    message = "Не удалось выполнить «" + command + "»: " + e.getMessage()
+			    + ". Проверьте путь к java.";
+		}
+		final int stateColor = colorId;
+		final String stateMessage = message;
+		display.asyncExec(() -> {
+		    if (!javaStateLabel.isDisposed()) {
+			setJavaState(display, stateColor, stateMessage);
+		    }
+		});
+		return Status.OK_STATUS;
+	    }
+	};
+	job.setSystem(true);
+	job.schedule();
+	javaProbeJob = job;
+    }
+
+    private void probeLsVersionAsync(Path artifact, LaunchMode mode) {
+	if (lsVersionJob != null) {
+	    lsVersionJob.cancel();
+	}
+	var display = statusLabel.getDisplay();
+	var command = javaCommandText.getText().trim();
+	var opts = javaOptsText.getText();
+	var jar = mode == LaunchMode.JAR;
+	statusLabel.setText("Проверяю версию BSL LS…");
+	var job = new Job("Проверка версии BSL LS") {
+	    @Override
+	    protected IStatus run(IProgressMonitor monitor) {
+		String text;
+		try {
+		    var version = LsVersionProbe.languageServerVersion(artifact, jar, command, opts);
+		    text = "Версия LS: " + (version.isEmpty() ? artifact.getFileName() : version);
+		} catch (Exception e) {
+		    text = "Дистрибутив найден, но не удалось выполнить version: " + e.getMessage();
+		}
+		final String statusText = text;
+		display.asyncExec(() -> {
+		    if (!statusLabel.isDisposed()) {
+			statusLabel.setText(statusText);
+		    }
+		});
+		return Status.OK_STATUS;
+	    }
+	};
+	job.setSystem(true);
+	job.schedule();
+	lsVersionJob = job;
+    }
+
+    private void setJavaState(org.eclipse.swt.widgets.Display display, int colorId, String message) {
+	javaStateLabel.setForeground(display.getSystemColor(colorId));
+	javaHintLabel.setForeground(display.getSystemColor(colorId));
+	javaHintLabel.setText(message);
     }
 
     private void startReleaseList() {

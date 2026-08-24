@@ -132,7 +132,7 @@ public class BSLPlugin extends Plugin {
     }
 
     public void restartLS() {
-	lsService.restart();
+	lsService.restartAsync();
     }
 
     public boolean isRunningLS() {

@@ -78,5 +78,5 @@ if ! grep -qF "$EXPECTED_VER" "$BUNDLES_INFO"; then
 fi
 
 log "ГОТОВО, установлен: $(basename "$EXPECTED_JAR")"
-log "Запустите тестовую EDT (ярлык 1С:EDT Start → 1C_EDT 2025.2) и проверьте:"
+log "Запустите эту EDT и проверьте:"
 log "  Окно → Параметры → Коннектор BSL LS; сохранение BSL-модуля → [BSL LS] в «Проблемах конфигурации»."

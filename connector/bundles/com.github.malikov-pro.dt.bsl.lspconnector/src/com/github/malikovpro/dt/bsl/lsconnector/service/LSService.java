@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
@@ -22,6 +26,9 @@ import com.github.malikovpro.dt.bsl.lsconnector.util.LsCache;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LsVersionProbe;
 
 public class LSService {
+    /** Сколько ждём ответа на LSP initialize, прежде чем признать LS зависшим. */
+    private static final long INIT_TIMEOUT_SECONDS = 15;
+
     private final BSLPlugin plugin;
     private final WindowsEventService windowsEventService;
     private final ScopedPreferenceStore preferenceStore;
@@ -96,6 +103,19 @@ public class LSService {
 	start();
     }
 
+    /** Перезапуск вне UI-потока: для вызова из диалогов и обработчиков интерфейса. */
+    public synchronized void restartAsync() {
+	var job = new Job("Перезапуск BSL LS") {
+	    @Override
+	    protected IStatus run(IProgressMonitor monitor) {
+		restart();
+		return Status.OK_STATUS;
+	    }
+	};
+	job.setSystem(true);
+	job.schedule();
+    }
+
     public LaunchMode getLaunchMode() {
 	return LaunchMode.from(preferenceStore.getString(BSLPreferencePage.LAUNCH_MODE));
     }
@@ -139,12 +159,17 @@ public class LSService {
 		    .command(arguments)
 		    .directory(pathToWorkspace.toFile())
 		    .start();
-	    plugin.sleepCurrentThread(500);
+	    if (!process.waitFor(2, TimeUnit.SECONDS) && process.isAlive()) {
+		// процесс жив и не вышел за 2 с — для LS это норма
+		return;
+	    }
 	    if (!process.isAlive()) {
 		BSLPlugin.createWarningStatus("Не удалалось запустить процесс с BSL LS. Процесс был аварийно завершен.");
 	    }
 	} catch (IOException e) {
 	    BSLPlugin.createErrorStatus("Не удалось запустить процесс BSL LS", e);
+	} catch (InterruptedException e) {
+	    Thread.currentThread().interrupt();
 	}
     }
 
@@ -176,8 +201,19 @@ public class LSService {
 	var client = new BSLLanguageClient();
 	connector = new BSLConnector(client, in, out);
 	connector.startInThread();
-	plugin.sleepCurrentThread(2000);
-	connector.initialize();
+	var future = connector.initialize();
+	try {
+	    // Ждём ответ ограниченно: зависший LS не должен блокировать вызывающий поток навсегда.
+	    future.get(INIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+	} catch (java.util.concurrent.TimeoutException e) {
+	    BSLPlugin.createWarningStatus("BSL LS не ответил на initialize за " + INIT_TIMEOUT_SECONDS
+		    + " с. Процесс остановлен — проверьте режим запуска и дистрибутив.");
+	    stop();
+	} catch (InterruptedException e) {
+	    Thread.currentThread().interrupt();
+	} catch (Exception e) {
+	    BSLPlugin.createWarningStatus("Ошибка инициализации BSL LS: " + e.getMessage());
+	}
     }
 
     private void clear() {

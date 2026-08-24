@@ -23,6 +23,8 @@ import com.github.malikovpro.dt.bsl.lsconnector.util.BSLCommon;
  * Один запрос к BSL LS на модуль: все ICheck диагностик делят этот кэш.
  */
 public final class LsModuleAnalyzer {
+    /// Сколько ждём публикации диагностик от LS после didOpen/didChange.
+    private static final long DIAGNOSTICS_TIMEOUT_MILLIS = 10_000;
     private final Object lock = new Object();
     private String cacheKey;
     private List<Diagnostic> cache = List.of();
@@ -69,11 +71,22 @@ public final class LsModuleAnalyzer {
 
 	plugin.getStatusService().beginBusy();
 	try {
-	    plugin.sleepCurrentThread(1000);
+	    // Ждём публикации диагностик ограниченно: LS может отвечать дольше секунды,
+	    // а пустой преждевременный результат здесь кэшируется.
+	    var deadline = System.currentTimeMillis() + DIAGNOSTICS_TIMEOUT_MILLIS;
+	    List<Diagnostic> found = null;
+	    while (found == null && System.currentTimeMillis() < deadline) {
+		if (progressMonitor.isCanceled() || !plugin.getWorkbenchParts().contains(uri.toString())) {
+		    return List.of();
+		}
+		found = connector.diagnostics(uri.toString());
+		if (found == null) {
+		    plugin.sleepCurrentThread(250);
+		}
+	    }
 	    if (progressMonitor.isCanceled() || !plugin.getWorkbenchParts().contains(uri.toString())) {
 		return List.of();
 	    }
-	    var found = connector.diagnostics(uri.toString());
 	    var diagnostics = found == null ? List.<Diagnostic>of() : found;
 	    synchronized (lock) {
 		cacheKey = key;
