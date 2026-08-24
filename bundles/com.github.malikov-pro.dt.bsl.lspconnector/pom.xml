@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+  xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>
+    <artifactId>bundles</artifactId>
+    <version>0.4.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>com.github.malikov-pro.dt.bsl.lspconnector</artifactId>
+  <version>0.4.0-SNAPSHOT</version>
+  <packaging>eclipse-plugin</packaging>
+
+  <properties>
+    <lombok.version>1.18.30</lombok.version>
+    <skip.v8std>true</skip.v8std>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <id>get-lombok</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.projectlombok</groupId>
+                  <artifactId>lombok</artifactId>
+                  <version>${lombok.version}</version>
+                  <type>jar</type>
+                  <outputDirectory>${project.build.directory}</outputDirectory>
+                  <destFileName>lombok.jar</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.tycho</groupId>
+        <artifactId>tycho-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>generate-ls-checks</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <skip>${skip.v8std}</skip>
+              <executable>python3</executable>
+              <workingDirectory>${project.basedir}/../..</workingDirectory>
+              <arguments>
+                <argument>${project.basedir}/../../scripts/generate-ls-checks.py</argument>
+                <argument>--offline</argument>
+                <argument>--v8std-dir</argument>
+                <argument>${project.basedir}/../../third_party/v8std</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>generate-checks</id>
+      <activation>
+        <file>
+          <exists>${project.basedir}/../../third_party/v8std/docs/diagnostics/bslls</exists>
+        </file>
+      </activation>
+      <properties>
+        <skip.v8std>false</skip.v8std>
+      </properties>
+    </profile>
+  </profiles>
+</project>

@@ -17,8 +17,8 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "bundles" / "com.github.otymko.dt.bsl.lspconnector"
-SRC_PKG = BUNDLE / "src" / "com" / "github" / "otymko" / "dt" / "bsl" / "lsconnector" / "check"
+BUNDLE = ROOT / "bundles" / "com.github.malikov-pro.dt.bsl.lspconnector"
+SRC_PKG = BUNDLE / "src" / "com" / "github" / "malikovpro" / "dt" / "bsl" / "lsconnector" / "check"
 TSV = SRC_PKG / "ls-diagnostics.tsv"
 PLUGIN_XML = BUNDLE / "plugin.xml"
 DESC_EN = BUNDLE / "check.descriptions"
@@ -47,11 +47,11 @@ SEVERITY_MAP = {
 }
 
 CATEGORY = {
-    "error": ("com.github.otymko.dt.bsl.lsconnector.checks.error", "Ошибки BSL LS"),
-    "smell": ("com.github.otymko.dt.bsl.lsconnector.checks.smell", "Дефекты кода BSL LS"),
-    "security": ("com.github.otymko.dt.bsl.lsconnector.checks.security", "Уязвимости BSL LS"),
+    "error": ("com.github.malikov-pro.dt.bsl.lsconnector.checks.error", "Ошибки BSL LS"),
+    "smell": ("com.github.malikov-pro.dt.bsl.lsconnector.checks.smell", "Дефекты кода BSL LS"),
+    "security": ("com.github.malikov-pro.dt.bsl.lsconnector.checks.security", "Уязвимости BSL LS"),
     "potential-security": (
-        "com.github.otymko.dt.bsl.lsconnector.checks.security",
+        "com.github.malikov-pro.dt.bsl.lsconnector.checks.security",
         "Уязвимости BSL LS",
     ),
 }
@@ -514,7 +514,7 @@ def plugin_xml(rows: list[tuple[str, str, str, str]]) -> str:
         checks.append(
             f"""      <check
             category="{category}"
-            class="com.github.otymko.dt.bsl.lsconnector.check.BslLsDiagnosticCheck:{code}">
+            class="com.github.malikovpro.dt.bsl.lsconnector.check.BslLsDiagnosticCheck:{code}">
       </check>"""
         )
     check_block = "\n".join(checks)
@@ -525,49 +525,49 @@ def plugin_xml(rows: list[tuple[str, str, str, str]]) -> str:
    <extension
          point="com._1c.g5.v8.dt.bsl.externalBslValidator">
       <externalValidator
-            class="com.github.otymko.dt.bsl.lsconnector.BSLValidator">
+            class="com.github.malikovpro.dt.bsl.lsconnector.BSLValidator">
       </externalValidator>
    </extension>
    <extension
          point="com.e1c.g5.v8.dt.check.checks">
       <category
-            id="com.github.otymko.dt.bsl.lsconnector.checks"
+            id="com.github.malikov-pro.dt.bsl.lsconnector.checks"
             title="Проверка BSL LS"
             description="Диагностики BSL Language Server. Карточки ведут на https://v8std.ru/diagnostics/bslls/">
       </category>
       <category
-            category="com.github.otymko.dt.bsl.lsconnector.checks"
-            id="com.github.otymko.dt.bsl.lsconnector.checks.error"
+            category="com.github.malikov-pro.dt.bsl.lsconnector.checks"
+            id="com.github.malikov-pro.dt.bsl.lsconnector.checks.error"
             title="Ошибки BSL LS">
       </category>
       <category
-            category="com.github.otymko.dt.bsl.lsconnector.checks"
-            id="com.github.otymko.dt.bsl.lsconnector.checks.smell"
+            category="com.github.malikov-pro.dt.bsl.lsconnector.checks"
+            id="com.github.malikov-pro.dt.bsl.lsconnector.checks.smell"
             title="Дефекты кода BSL LS">
       </category>
       <category
-            category="com.github.otymko.dt.bsl.lsconnector.checks"
-            id="com.github.otymko.dt.bsl.lsconnector.checks.security"
+            category="com.github.malikov-pro.dt.bsl.lsconnector.checks"
+            id="com.github.malikov-pro.dt.bsl.lsconnector.checks.security"
             title="Уязвимости BSL LS">
       </category>
       <check
-            category="com.github.otymko.dt.bsl.lsconnector.checks"
-            class="com.github.otymko.dt.bsl.lsconnector.BSLLsCheck">
+            category="com.github.malikov-pro.dt.bsl.lsconnector.checks"
+            class="com.github.malikovpro.dt.bsl.lsconnector.BSLLsCheck">
       </check>
 {check_block}
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            class="com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferencePage"
-            id="com.github.otymko.dt.bsl.lsconnector.plugin.page"
+            class="com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage"
+            id="com.github.malikov-pro.dt.bsl.lsconnector.plugin.page"
             name="Коннектор BSL LS">
       </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="com.github.otymko.dt.bsl.lsconnector.ui.BSLPreferenceInitializer">
+            class="com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferenceInitializer">
       </initializer>
    </extension>
    <extension
@@ -575,10 +575,10 @@ def plugin_xml(rows: list[tuple[str, str, str, str]]) -> str:
       <menuContribution
             locationURI="toolbar:org.eclipse.ui.trim.status">
          <toolbar
-               id="com.github.otymko.dt.bsl.lsconnector.statusBar">
+               id="com.github.malikov-pro.dt.bsl.lsconnector.statusBar">
             <control
-                  class="com.github.otymko.dt.bsl.lsconnector.ui.LsStatusContribution"
-                  id="com.github.otymko.dt.bsl.lsconnector.status">
+                  class="com.github.malikovpro.dt.bsl.lsconnector.ui.LsStatusContribution"
+                  id="com.github.malikov-pro.dt.bsl.lsconnector.status">
             </control>
          </toolbar>
       </menuContribution>

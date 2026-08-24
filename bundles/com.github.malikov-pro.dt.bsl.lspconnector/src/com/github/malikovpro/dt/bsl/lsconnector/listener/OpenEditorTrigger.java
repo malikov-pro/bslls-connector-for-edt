@@ -1,0 +1,98 @@
+package com.github.malikovpro.dt.bsl.lsconnector.listener;
+
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPartReference;
+
+import com._1c.g5.v8.dt.bsl.ui.editor.BslXtextEditor;
+import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
+import com.github.malikovpro.dt.bsl.lsconnector.util.BSLCommon;
+
+public class OpenEditorTrigger implements IPartListener2 {
+
+    @Override
+    public void partActivated(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
+	var plugin = BSLPlugin.getPlugin();
+	if (plugin.isRunningLS()) {
+	    return;
+	}
+	if (part instanceof BslXtextEditor) {
+	    var editorPart = (BslXtextEditor) part;
+	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());
+
+	    if (!plugin.getWorkbenchParts().contains(uri.toString())) {
+		partOpened(partRef);
+	    }
+	}
+
+    }
+
+    @Override
+    public void partClosed(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.detach((BslXtextEditor) part);
+	}
+	if (!BSLPlugin.getPlugin().isRunningLS()) {
+	    return;
+	}
+	if (part instanceof BslXtextEditor) {
+	    var editorPart = (BslXtextEditor) part;
+	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());
+	    var plugin = BSLPlugin.getPlugin();
+	    plugin.getWorkbenchParts().remove(uri.toString());
+	    plugin.getLsService().getConnector().textDocumentDidClose(uri);
+	}
+    }
+
+    @Override
+    public void partOpened(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(true);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
+	if (!BSLPlugin.getPlugin().isRunningLS()) {
+	    return;
+	}
+	if (part instanceof BslXtextEditor) {
+	    var editorPart = (BslXtextEditor) part;
+	    var uri = BSLCommon.uri(editorPart.getResource().getLocationURI());
+	    var content = BSLCommon.getContentFromXtextEditor(editorPart);
+	    var plugin = BSLPlugin.getPlugin();
+	    plugin.getWorkbenchParts().add(uri.toString());
+	    plugin.getLsService().getConnector().textDocumentDidOpen(uri, content);
+	}
+    }
+
+    @Override
+    public void partHidden(IWorkbenchPartReference partRef) {
+	// none
+    }
+
+    @Override
+    public void partVisible(IWorkbenchPartReference partRef) {
+	// none
+    }
+
+    @Override
+    public void partInputChanged(IWorkbenchPartReference partRef) {
+	// none
+    }
+
+    @Override
+    public void partDeactivated(IWorkbenchPartReference partRef) {
+	// none
+    }
+
+    @Override
+    public void partBroughtToTop(IWorkbenchPartReference partRef) {
+	var part = partRef.getPart(false);
+	if (part instanceof BslXtextEditor) {
+	    LsSkipCheckRewriter.attach((BslXtextEditor) part);
+	}
+    }
+
+}

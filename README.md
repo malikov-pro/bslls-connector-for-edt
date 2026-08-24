@@ -18,7 +18,7 @@
 1. Откройте `Справка` -> `Установить новое ПО`.
 2. Введите ссылку:
 ```
-https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
+https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
 ```
 3. Нажмите `Добавить`.
 4. Установите флажок на `BSL LS connector for EDT`.
@@ -63,17 +63,32 @@ https://otymko.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/
 
 1. `Справка` → `Установить новое ПО` → `Добавить` → `Архив`.
 2. Укажите zip:
-   `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/com.github.otymko.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
+   `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/com.github.malikov-pro.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
 3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
 4. Каждая сборка даёт новый квалификатор (`0.4.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
 5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
+
+### Публикация сайта обновления
+
+Ссылка установки — это статические файлы p2-репозитория на GitHub Pages:
+
+```
+https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
+```
+
+Публикует workflow `deploy-update-site.yml` (запуск: публикация релиза или вручную
+из вкладки Actions): собирает p2 и перезаписывает путь `…/latest/` — EDT видит
+обновление по изменившемуся квалификатору. Для работы нужны:
+1. Репозиторий под аккаунтом `malikov-pro`, в его настройках:
+   `Settings → Pages → Source: GitHub Actions`.
+2. Секреты `MAVEN_USERNAME` / `MAVEN_CENTRAL_TOKEN` (доступ к реджестри 1С).
 
 ## Разработчикам
 
 ### Требования
 
 * JDK 17+
-* Maven 3.9+
+* Maven 3.9+ (Tycho 4.0.5 на 3.8.x падает «requires Maven version 3.9.0»)
 * Доступ к репозиторию EDT (credentials в `bom/settings.xml`)
 * Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
 * Сабмодуль [zeegin/v8std](https://github.com/zeegin/v8std): `git clone --recurse-submodules …` или `git submodule update --init third_party/v8std`
@@ -92,18 +107,30 @@ Target Editor этой PDE не открывает `<location type="Maven">` (lo
 
 ### Локальная сборка
 
+> Канонический путь — скрипт в корне репозитория: он сам скачивает lombok,
+> ставит javaagent и entity-лимиты (`.mvn/jvm.config`) и печатает путь к p2-zip.
+
+```bash
+bash compile.sh
+# профиль EDT 2026.1:
+bash compile.sh --profile edt-2026.1
+```
+
+Ниже — те же шаги вручную (например, для Windows без bash):
+
 > `tycho-compiler-plugin` не умеет обрабатывать аннотации `lombok` вне Eclipse IDE,
 > поэтому `lombok.jar` подключается как `-javaagent` через `MAVEN_OPTS`.
+
+> XML-entity лимиты уже заданы в `.mvn/jvm.config` — Maven подхватывает их сам.
 
 #### Linux / macOS
 
 ```bash
 # 1. Скачайте lombok
-export MAVEN_OPTS="-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0"
-mvn dependency:copy@get-lombok -pl bundles/com.github.otymko.dt.bsl.lspconnector
+mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
 
 # 2. Соберите проект
-export MAVEN_OPTS="-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -javaagent:$(pwd)/bundles/com.github.otymko.dt.bsl.lspconnector/target/lombok.jar=ECJ"
+export MAVEN_OPTS="-javaagent:$(pwd)/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
@@ -111,11 +138,10 @@ mvn verify -Dtycho.localArtifacts=ignore
 
 ```bat
 rem 1. Скачайте lombok
-set MAVEN_OPTS=-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0
-mvn dependency:copy@get-lombok -pl bundles/com.github.otymko.dt.bsl.lspconnector
+mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
 
 rem 2. Соберите проект
-set MAVEN_OPTS=-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -javaagent:%cd%\bundles\com.github.otymko.dt.bsl.lspconnector\target\lombok.jar=ECJ
+set MAVEN_OPTS=-javaagent:%cd%\bundles\com.github.malikov-pro.dt.bsl.lspconnector\target\lombok.jar=ECJ
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
@@ -133,12 +159,12 @@ mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
 git submodule update --init third_party/v8std
 python3 scripts/generate-ls-checks.py
 # или при Maven-сборке (если сабмодуль уже есть, профиль generate-checks включается сам):
-mvn -pl bundles/com.github.otymko.dt.bsl.lspconnector generate-resources
+mvn -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector generate-resources
 ```
 
 Чужой клон: `python3 scripts/generate-ls-checks.py --v8std-dir путь/к/v8std`.
 Без сети: `--offline` (нужен сабмодуль или ранее скачанный `.cache/v8std`).
 По желанию можно передать старый индекс BSL LS (markdown-таблица с ключами) первым аргументом.
 
-Результат сборки — p2-репозиторий в `repositories/com.github.otymko.dt.bsl.lsconnector.repository/target/`.
+Результат сборки — p2-репозиторий в `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/`.
 Ставьте этот репозиторий в ту EDT, под которую собирали.

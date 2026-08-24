@@ -1,0 +1,88 @@
+name: Deploy Update Site
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Актуализация
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Установка JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          architecture: x64
+          # реджестри пакетов 1С
+          server-id: dt_repository
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+
+      - name: Кеширование m2
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/default/default.target') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # XML-entity лимиты приходят из .mvn/jvm.config
+      - name: Сборка
+        run: |
+          mvn -q dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
+          export MAVEN_OPTS="-javaagent:$PWD/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
+          mvn -B clean verify -T 1C -Dtycho.localArtifacts=ignore
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+
+      - name: Формирование сайта
+        run: |
+          SITE=_site/update/bslls-connector-for-edt/latest
+          mkdir -p "$SITE"
+          cp -r repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository/* "$SITE/"
+          QUALIFIER=$(basename "$(ls "$SITE"/plugins/com.github.malikov-pro*dt.bsl.lspconnector_*.jar | head -n 1)" .jar)
+          cat > _site/index.html <<EOF
+          <!DOCTYPE html>
+          <html lang="ru">
+          <head><meta charset="utf-8"><title>BSL LS connector for EDT — update site</title></head>
+          <body>
+            <h1>BSL LS connector for EDT</h1>
+            <p>Собранный квалификатор: <strong>${QUALIFIER#*lspconnector_}</strong></p>
+            <p>URL для установки (Справка → Установить новое ПО):</p>
+            <pre>https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/</pre>
+            <p><a href="https://github.com/malikov-pro/bslls-connector-for-edt">Репозиторий</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Настройка Pages
+        uses: actions/configure-pages@v6
+
+      - name: Публикация артефакта
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Деплой
+        id: deployment
+        uses: actions/deploy-pages@v5

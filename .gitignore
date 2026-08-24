@@ -5,6 +5,9 @@
 **/target/
 **/.settings/org.eclipse.m2e.core.prefs
 bom/edt-credentials.env
-bundles/com.github.otymko.dt.bsl.lspconnector/lib/
+bundles/com.github.malikov-pro.dt.bsl.lspconnector/lib/
 # HTML-карточки: scripts/generate-ls-checks.py из third_party/v8std
-bundles/com.github.otymko.dt.bsl.lspconnector/check.descriptions/
+bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
+
+# Локальные клоны для анализа (не часть проекта)
+/_source/

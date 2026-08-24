@@ -5,13 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.github.otymko.dt.bsl.lsconnector</groupId>
+    <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>
     <artifactId>bom</artifactId>
     <version>0.4.0-SNAPSHOT</version>
     <relativePath>./bom/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.github.otymko.dt.bsl.lsconnector</groupId>
+  <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>
   <artifactId>parent</artifactId>
   <version>0.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -19,7 +19,7 @@
   <name>BSL LS connector for EDT</name>
 
   <scm>
-    <connection>scm:git:git@github.com:otymko/bslls-connector-for-edt.git</connection>
+    <connection>scm:git:git@github.com:malikov-pro/bslls-connector-for-edt.git</connection>
   </scm>
 
   <modules>
