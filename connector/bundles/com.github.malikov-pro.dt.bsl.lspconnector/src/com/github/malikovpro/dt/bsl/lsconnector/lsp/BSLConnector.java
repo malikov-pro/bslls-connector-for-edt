@@ -63,6 +63,11 @@ public class BSLConnector {
 
     public void startInThread() {
 	BSLPlugin.createWarningStatus("Запуск LSP");
+	// launcher и прокси создаём синхронно: после startInThread() сервер обязан быть доступен.
+	// Раньше это делал фоновый поток — initialize() успевал упасть с NPE (server == null).
+	launcher = LSPLauncher.createClientLauncher(client, in, out);
+	server = launcher.getRemoteProxy();
+	thread = new Thread(this::start);
 	thread.setDaemon(true);
 	thread.setName(LAUNCHER_NAME);
 	thread.start();
@@ -175,9 +180,7 @@ public class BSLConnector {
     }
 
     private void start() {
-	launcher = LSPLauncher.createClientLauncher(client, in, out);
 	var future = launcher.startListening();
-	server = launcher.getRemoteProxy();
 	while (true) {
 	    try {
 		future.get();

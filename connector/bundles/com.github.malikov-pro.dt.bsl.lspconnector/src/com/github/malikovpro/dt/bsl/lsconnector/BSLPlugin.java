@@ -8,9 +8,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
@@ -98,7 +100,17 @@ public class BSLPlugin extends Plugin {
 
 	initialize();
 	startServices();
-	startLS();
+	// LS стартует в фоне: активатор не должен задерживать загрузку EDT
+	// (initialize теперь ждёт ответ ограниченно, но это всё равно не работа для старта бандла).
+	var job = new Job("Запуск BSL LS") {
+	    @Override
+	    protected IStatus run(IProgressMonitor monitor) {
+		startLS();
+		return Status.OK_STATUS;
+	    }
+	};
+	job.setSystem(true);
+	job.schedule();
     }
 
     @Override
