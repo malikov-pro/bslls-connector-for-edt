@@ -16,9 +16,10 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONNECTOR="$ROOT/connector"
 BUNDLE="bundles/com.github.malikov-pro.dt.bsl.lspconnector"
-REPO_DIR="$ROOT/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target"
-LOMBOK="$ROOT/$BUNDLE/target/lombok.jar"
+REPO_DIR="$CONNECTOR/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target"
+LOMBOK="$CONNECTOR/$BUNDLE/target/lombok.jar"
 
 PROFILE=""
 SKIP_LOMBOK_COPY="false"
@@ -64,19 +65,19 @@ log "JAVA_HOME : ${JAVA_HOME:-<из PATH>}"
 log "Maven     : $MVN"
 
 # --- credentials для репозитория EDT (bom/settings.xml) ---------------------
-CRED_ENV="$ROOT/bom/edt-credentials.env"
+CRED_ENV="$CONNECTOR/bom/edt-credentials.env"
 if [[ -f "$CRED_ENV" ]]; then
     # shellcheck disable=SC1090
     set -a; source "$CRED_ENV"; set +a
-    log "Учётные данные: bom/edt-credentials.env"
+    log "Учётные данные: connector/bom/edt-credentials.env"
 else
-    log "bom/edt-credentials.env не найден — если p2 EDT попросит авторизацию, см. bom/edt-credentials.env.example"
+    log "connector/bom/edt-credentials.env не найден — если p2 EDT попросит авторизацию, см. connector/bom/edt-credentials.env.example"
 fi
 
 # --- lombok -----------------------------------------------------------------
 if [[ "$SKIP_LOMBOK_COPY" != "true" || ! -f "$LOMBOK" ]]; then
     log "Скачивание lombok (dependency:copy@get-lombok)…"
-    (cd "$ROOT" && "$MVN" -q dependency:copy@get-lombok -pl "$BUNDLE")
+    (cd "$CONNECTOR" && "$MVN" -q dependency:copy@get-lombok -pl "$BUNDLE")
 fi
 [[ -f "$LOMBOK" ]] || die "lombok.jar не появился: $LOMBOK"
 
@@ -88,8 +89,8 @@ log "MAVEN_OPTS: $MAVEN_OPTS"
 CMD=(clean verify --batch-mode -T 1C -Dtycho.localArtifacts=ignore)
 [[ -n "$PROFILE" ]] && CMD+=(-P"$PROFILE")
 
-log "Запуск: mvn ${CMD[*]}"
-(cd "$ROOT" && "$MVN" "${CMD[@]}")
+log "Запуск: mvn ${CMD[*]} (в connector/)"
+(cd "$CONNECTOR" && "$MVN" "${CMD[@]}")
 
 # --- artifact ----------------------------------------------------------------
 ZIP="$(ls -t "$REPO_DIR"/*.zip 2>/dev/null | head -n 1 || true)"

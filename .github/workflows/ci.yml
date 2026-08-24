@@ -35,6 +35,7 @@ jobs:
 
       # https://edt.1c.ru/dev/ru/docs/plugins/project/build-install-publish-project/
       - name: Загрузка lombok
+        working-directory: connector
         run: mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
@@ -42,8 +43,9 @@ jobs:
           MAVEN_OPTS: "-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0"
 
       - name: Сборка
+        working-directory: connector
         run: mvn verify -Dtycho.localArtifacts=ignore
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
-          MAVEN_OPTS: "-Djdk.xml.maxGeneralEntitySizeLimit=0 -Djdk.xml.totalEntitySizeLimit=0 -javaagent:${{ github.workspace }}/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
+          MAVEN_OPTS: "-javaagent:${{ github.workspace }}/connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"

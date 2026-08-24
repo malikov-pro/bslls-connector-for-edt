@@ -7,16 +7,16 @@ description: Как собрать плагин bslls-connector-for-edt (Maven/T
 
 ## Раскладка
 
-Реактор Maven/Tycho в корне репозитория:
+Реактор Maven/Tycho — в `connector/` (каталог изолирован для работы PDE):
 
 | Каталог | Что |
 |---|---|
-| `bom/` | родительский pom + `settings.xml`/`edt-credentials.env` (доступ к p2 EDT) |
-| `bundles/com.github.malikov-pro.dt.bsl.lspconnector` | сам плагин (один бандл) |
-| `features/com.github.malikov-pro.dt.bsl.lsconnector` | фича |
-| `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository` | p2-репозиторий (результат сборки) |
-| `targets/default/default.target` | целевая платформа EDT 2025.2 + Eclipse 2025-12 |
-| `targets/edt-2026.1/edt-2026.1.target` | платформа EDT 2026.1 (профиль `edt-2026.1`) |
+| `connector/bom/` | родительский pom + `settings.xml`/`edt-credentials.env` (доступ к p2 EDT) |
+| `connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector` | сам плагин (один бандл) |
+| `connector/features/com.github.malikov-pro.dt.bsl.lsconnector` | фича |
+| `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository` | p2-репозиторий (результат сборки) |
+| `connector/targets/default/default.target` | целевая платформа EDT 2025.2 + Eclipse 2025-12 |
+| `connector/targets/edt-2026.1/edt-2026.1.target` | платформа EDT 2026.1 (профиль `edt-2026.1`) |
 
 Внимание к именам: бандл — **lsp**connector, фича/репозиторий — **ls**connector.
 
@@ -32,7 +32,7 @@ bash compile.sh --profile edt-2026.1
 
 Скрипт сам: подхватывает `bom/edt-credentials.env`, скачивает lombok
 (`dependency:copy@get-lombok`) и ставит `-javaagent:<…>/lombok.jar=ECJ` в
-`MAVEN_OPTS`. XML-entity лимиты приходут из `.mvn/jvm.config` автоматически —
+`MAVEN_OPTS`. XML-entity лимиты приходят из `connector/.mvn/jvm.config` автоматически —
 MAVEN_OPTS руками не задавать.
 
 - Toolchain можно передать явно: `--java-home <JDK17+>` / `--maven-home <Maven>`.
@@ -48,7 +48,7 @@ MAVEN_OPTS руками не задавать.
 
 ## Результат и установка в тестовую EDT
 
-Артефакт: `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/*.zip`
+Артефакт: `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/*.zip`
 (имя содержит свежий квалификатор вида `0.4.0.v20260822191503`).
 
 Канонический путь установки — скрипт через `p2 director`, без GUI:

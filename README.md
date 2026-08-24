@@ -63,7 +63,7 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 
 1. `Справка` → `Установить новое ПО` → `Добавить` → `Архив`.
 2. Укажите zip:
-   `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/com.github.malikov-pro.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
+   `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/com.github.malikov-pro.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
 3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
 4. Каждая сборка даёт новый квалификатор (`0.4.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
 5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
@@ -89,7 +89,7 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 
 * JDK 17+
 * Maven 3.9+ (Tycho 4.0.5 на 3.8.x падает «requires Maven version 3.9.0»)
-* Доступ к репозиторию EDT (credentials в `bom/settings.xml`)
+* Доступ к репозиторию EDT (credentials в `connector/bom/settings.xml`)
 * Плагин lombok (https://projectlombok.org/setup/eclipse) — для работы в IDE
 * Сабмодуль [zeegin/v8std](https://github.com/zeegin/v8std): `git clone --recurse-submodules …` или `git submodule update --init third_party/v8std`
 
@@ -100,7 +100,7 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 В PDE-workspace:
 
 1. Вид **Project Explorer** (не Package Explorer).
-2. Проект `default` → файл `default.target` (EDT 2025.2 + Eclipse 2025-12). Для 2026.1 — `targets/edt-2026.1/edt-2026.1.target`.
+2. Проект `default` (в `connector/targets/default/`) → файл `default.target` (EDT 2025.2 + Eclipse 2025-12). Для 2026.1 — `connector/targets/edt-2026.1/edt-2026.1.target`.
 3. Либо **Окно → Параметры → Plug-in Development → Target Platform** → **Add** → **Workspace**.
 
 Target Editor этой PDE не открывает `<location type="Maven">` (lombok/utils). Для компиляции в IDE достаточно **Running Platform**, если в ней есть бандлы `com._1c.g5.v8.dt.*`.
@@ -126,22 +126,24 @@ bash compile.sh --profile edt-2026.1
 #### Linux / macOS
 
 ```bash
+cd connector
 # 1. Скачайте lombok
 mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
 
 # 2. Соберите проект
-export MAVEN_OPTS="-javaagent:$(pwd)/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
+export MAVEN_OPTS="-javaagent:$(pwd)/connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
 #### Windows
 
 ```bat
+cd connector
 rem 1. Скачайте lombok
 mvn dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
 
 rem 2. Соберите проект
-set MAVEN_OPTS=-javaagent:%cd%\bundles\com.github.malikov-pro.dt.bsl.lspconnector\target\lombok.jar=ECJ
+set MAVEN_OPTS=-javaagent:%cd%\connector\bundles\com.github.malikov-pro.dt.bsl.lspconnector\target\lombok.jar=ECJ
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
@@ -159,12 +161,12 @@ mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
 git submodule update --init third_party/v8std
 python3 scripts/generate-ls-checks.py
 # или при Maven-сборке (если сабмодуль уже есть, профиль generate-checks включается сам):
-mvn -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector generate-resources
+mvn -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector generate-resources   # из connector/
 ```
 
 Чужой клон: `python3 scripts/generate-ls-checks.py --v8std-dir путь/к/v8std`.
 Без сети: `--offline` (нужен сабмодуль или ранее скачанный `.cache/v8std`).
 По желанию можно передать старый индекс BSL LS (markdown-таблица с ключами) первым аргументом.
 
-Результат сборки — p2-репозиторий в `repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/`.
+Результат сборки — p2-репозиторий в `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/`.
 Ставьте этот репозиторий в ту EDT, под которую собирали.

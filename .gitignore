@@ -4,17 +4,18 @@
 **/.cache/
 **/target/
 **/.settings/org.eclipse.m2e.core.prefs
-bom/edt-credentials.env
-bundles/com.github.malikov-pro.dt.bsl.lspconnector/lib/
+connector/bom/edt-credentials.env
+connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/lib/
 # HTML-карточки: scripts/generate-ls-checks.py из third_party/v8std
-bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
+connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
 
 # Локальные клоны для анализа (не часть проекта)
 /_source/
 
 # Служебные проекты агрегаторов от импорта в Eclipse/PDE (m2e)
-/bundles/.project
-/features/.project
-/repositories/.project
-/targets/*/.project
-/targets/.settings/
+/connector/bundles/.project
+/connector/features/.project
+/connector/repositories/.project
+/connector/targets/*/.project
+/connector/targets/.settings/
+/connector/.metadata/

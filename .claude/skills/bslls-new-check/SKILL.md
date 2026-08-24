@@ -9,7 +9,7 @@ description: Как добавляется/обновляется каталог
 [v8std](https://github.com/zeegin/v8std) (`bslls` + `v8-code-style`), скрипт
 `scripts/generate-ls-checks.py` пишет:
 
-1. `<check>`-записи в `bundles/com.github.malikov-pro.dt.bsl.lspconnector/plugin.xml`
+1. `<check>`-записи в `connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/plugin.xml`
    (каждый код LS = отдельная проверка EDT);
 2. ресурс `src/…/check/ls-diagnostics.tsv`, который читает `LsDiagnosticCatalog`;
 3. карточки `check.descriptions/<Код>.md` (+ HTML-карточка `<Код>.html`) —

@@ -45,8 +45,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/default/default.target') }}
           restore-keys: ${{ runner.os }}-m2
 
-      # XML-entity лимиты приходят из .mvn/jvm.config
+      # XML-entity лимиты приходят из connector/.mvn/jvm.config
       - name: Сборка
+        working-directory: connector
         run: |
           mvn -q dependency:copy@get-lombok -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector
           export MAVEN_OPTS="-javaagent:$PWD/bundles/com.github.malikov-pro.dt.bsl.lspconnector/target/lombok.jar=ECJ"
@@ -59,7 +60,7 @@ jobs:
         run: |
           SITE=_site/update/bslls-connector-for-edt/latest
           mkdir -p "$SITE"
-          cp -r repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository/* "$SITE/"
+          cp -r connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository/* "$SITE/"
           QUALIFIER=$(basename "$(ls "$SITE"/plugins/com.github.malikov-pro*dt.bsl.lspconnector_*.jar | head -n 1)" .jar)
           cat > _site/index.html <<EOF
           <!DOCTYPE html>

@@ -5,7 +5,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 
 # Архитектура бандла
 
-Один бандл: `bundles/com.github.malikov-pro.dt.bsl.lspconnector`,
+Один бандл: `connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector`,
 корень пакетов `com/github/malikov-pro/dt/bsl/lsconnector`.
 Плагин подключает внешний процесс **BSL Language Server** по LSP и публикует
 его диагностики как проверки EDT.

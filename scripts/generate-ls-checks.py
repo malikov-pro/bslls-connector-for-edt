@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-BUNDLE = ROOT / "bundles" / "com.github.malikov-pro.dt.bsl.lspconnector"
+BUNDLE = ROOT / "connector" / "bundles" / "com.github.malikov-pro.dt.bsl.lspconnector"
 SRC_PKG = BUNDLE / "src" / "com" / "github" / "malikovpro" / "dt" / "bsl" / "lsconnector" / "check"
 TSV = SRC_PKG / "ls-diagnostics.tsv"
 PLUGIN_XML = BUNDLE / "plugin.xml"

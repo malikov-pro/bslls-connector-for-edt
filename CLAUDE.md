@@ -43,7 +43,7 @@
    (`tycho-compiler-plugin` аннотации не обрабатывает). Симптом пропажи агента —
    «cannot find symbol» на геттерах/билдерах. Канонический путь — `compile.sh`,
    MAVEN_OPTS вручную не изобретать.
-7. **XML-entity лимиты уже в `.mvn/jvm.config`** — Maven подхватывает их сам
+7. **XML-entity лимиты уже в `connector/.mvn/jvm.config`** — Maven подхватывает их сам
    (склеивает с MAVEN_OPTS). Дублировать в env не нужно.
 
 ---

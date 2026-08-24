@@ -7,12 +7,12 @@
 #   bash scripts/deploy-edt.sh --edt "/путь/к/1cedt"    # своя инсталляция (каталог с 1cedt)
 #
 # Репозиторий берётся последний собранный:
-#   repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository
+#   connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEFAULT_REPO="$ROOT/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository"
+DEFAULT_REPO="$ROOT/connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository"
 FEATURE_IU="com.github.malikov-pro.dt.bsl.lsconnector.feature.group"
 
 REPO=""

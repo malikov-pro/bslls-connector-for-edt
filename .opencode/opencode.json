@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "eclipse-ide": {
+      "type": "remote",
+      "environment": {
+        "API_KEY": "ede8a251-2c99-4b45-adf0-1b365df128bf"
+      },
+      "enabled": true,
+      "url": "http://127.0.0.1:8080/mcp/eclipse-ide",
+      "headers": {
+        "Authorization": "Bearer {env: API_KEY}"
+      }
+    }
+  }
+}
