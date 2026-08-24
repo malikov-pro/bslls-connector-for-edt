@@ -36,11 +36,17 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
    * **JAR** — `*-exec.jar`. **Команда Java** из PATH; для BSL LS 1.x нужна **Java 21+** (JVM EDT 17 не подходит).
    * **WebSocket** — только URL, по умолчанию `ws://localhost:8025/lsp`. Кэш и GitHub не используются. Контейнер поднимается отдельно, см. [docker/README.md](docker/README.md).
 3. Если кэша нет — выберите релиз и нажмите **Скачать**. Новая загрузка затирает предыдущий слот. Своего файла через «Обзор» нет.
-4. **Применить** — плагин перезапустит подключение к LS.
+4. **Включите проверки BSL LS** — без этого замечания не появятся, даже если LS запущен:
+   * на уровне воркспейса: `Окно` → `Параметры` → `1C:Enterprise Development Tools` → `Проверки конфигурации` — отметьте категории `BSL LS` (или отдельные проверки с кодами BSL LS);
+   * или на уровне проекта: ПКМ по проекту → `Свойства` → `Проверки`.
+5. **Применить** — плагин перезапустит подключение к LS.
+6. Проверка: сохраните BSL-модуль с нарушением (например, строку длиннее 120 символов) — в панели `Проблемы конфигурации` появится замечание с префиксом `[BSL LS]`. Если замечаний нет — см. [issue #2](https://github.com/malikov-pro/bslls-connector-for-edt/issues/2) и журнал ошибок (`Окно` → `Журнал ошибок`); stderr процесса LS пишется в `~/.bsl-connector-for-edt/logs/ls-stderr-<режим>.log`.
 
-Для настройки проверки используется файл [.bsl-language-server.json](https://1c-syntax.github.io/bsl-language-server/features/ConfigurationFile/) (ключ `-c` / `--configuration` только для native и jar).
+Для настройки проверки используется файл [.bsl-language-server.json](https://1c-syntax.github.io/bsl-language-server/features/ConfigurationFile/) (ключ `-c` / `--configuration` только для native и jar). Путь к файлу задаётся в настройках коннектора; если файл не найден, в журнал ошибок пишется предупреждение.
 
 Шаблон файла `.bsl-language-server.json` можно взять [example/.bsl-language-server.json](/example/.bsl-language-server.json).
+
+⚠️ Не включайте в конфиге `traceLog`: BSL LS пишет лог **внутрь анализируемого проекта** (относительно рабочего каталога), и эти файлы засоряют проект в EDT.
 
 Конфигурационный файл должен содержать:
 * Событие запуска анализа `computeTrigger` на `onSave`.

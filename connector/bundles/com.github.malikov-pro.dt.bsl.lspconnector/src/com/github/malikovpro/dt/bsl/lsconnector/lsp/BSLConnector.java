@@ -42,6 +42,11 @@ public class BSLConnector {
     private static final int DEFAULT_TIMEOUT = 10;
     private static final int DEFAULT_SMALL_TIMEOUT = 2;
     private static final String LAUNCHER_NAME = "BSLLanguageLauncher";
+    private static final int FIRST_DOCUMENT_VERSION = 0;
+
+    /** Версии документов по uri — требование LSP (VersionedTextDocumentIdentifier). */
+    private final java.util.concurrent.ConcurrentHashMap<String, Integer> documentVersions =
+	    new java.util.concurrent.ConcurrentHashMap<>();
 
     private BSLLanguageClient client;
     private LanguageServer server;
@@ -101,6 +106,8 @@ public class BSLConnector {
 	item.setLanguageId("bsl"); // TODO: вынести в константы
 	item.setUri(uri.toString());
 	item.setText(text);
+	item.setVersion(FIRST_DOCUMENT_VERSION);
+	documentVersions.put(uri.toString(), FIRST_DOCUMENT_VERSION);
 	params.setTextDocument(item);
 	runFutureTask(() -> server.getTextDocumentService().didOpen(params), DEFAULT_SMALL_TIMEOUT);
     }
@@ -117,7 +124,8 @@ public class BSLConnector {
 	var params = new DidChangeTextDocumentParams();
 	var versionedTextDocumentIdentifier = new VersionedTextDocumentIdentifier();
 	versionedTextDocumentIdentifier.setUri(uri.toString());
-	versionedTextDocumentIdentifier.setVersion(0);
+	var version = documentVersions.merge(uri.toString(), 1, Integer::sum);
+	versionedTextDocumentIdentifier.setVersion(version);
 	params.setTextDocument(versionedTextDocumentIdentifier);
 	var textDocument = new TextDocumentContentChangeEvent();
 	textDocument.setText(text);
@@ -131,6 +139,7 @@ public class BSLConnector {
 	var params = new DidCloseTextDocumentParams();
 	var textDocument = new TextDocumentIdentifier(uri.toString());
 	params.setTextDocument(textDocument);
+	documentVersions.remove(uri.toString());
 	runFutureTask(() -> server.getTextDocumentService().didClose(params), DEFAULT_SMALL_TIMEOUT);
     }
 

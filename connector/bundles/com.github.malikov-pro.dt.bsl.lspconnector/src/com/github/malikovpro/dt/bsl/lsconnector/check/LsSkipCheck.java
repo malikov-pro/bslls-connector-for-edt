@@ -79,12 +79,15 @@ public final class LsSkipCheck {
 		    allOff = off;
 		    continue;
 		}
-		var id = normalize(code);
+		// Канонизируем по каталогу: пользователи пишут код в любом регистре
+		// (linelength, LineLength, LINELENGTH) — подавление должно работать одинаково.
+		var canonical = canonicalLsCode(code);
+		var id = canonical != null ? canonical : normalize(code);
 		if (off) {
-		    codesOff.add(id);
+		    codesOff.add(normalize(id));
 		    codesOff.add(toKebab(id));
 		} else {
-		    codesOff.remove(id);
+		    codesOff.remove(normalize(id));
 		    codesOff.remove(toKebab(id));
 		}
 	    }
@@ -114,7 +117,7 @@ public final class LsSkipCheck {
     }
 
     private static String normalize(String value) {
-	return value.trim();
+	return value.trim().toLowerCase(Locale.ROOT);
     }
 
     private static String toKebab(String value) {

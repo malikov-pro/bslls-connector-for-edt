@@ -139,6 +139,11 @@ public class LSService {
 	    return;
 	}
 
+	if (pathToConfiguration.isPresent() && !pathToConfiguration.get().toFile().exists()) {
+	    BSLPlugin.createWarningStatus("Файл конфигурации BSL LS не найден: " + pathToConfiguration.get()
+		    + ". Проверьте путь в настройках (.bsl-language-server.json).");
+	}
+
 	List<String> arguments = new ArrayList<>();
 	if (mode == LaunchMode.JAR) {
 	    arguments.add(javaCommand());
@@ -155,16 +160,22 @@ public class LSService {
 	BSLPlugin.createWarningStatus(arguments.toString());
 
 	try {
-	    process = new ProcessBuilder()
+	    var builder = new ProcessBuilder()
 		    .command(arguments)
-		    .directory(pathToWorkspace.toFile())
-		    .start();
+		    .directory(pathToWorkspace.toFile());
+	    // stderr обязательно дренируем: переполненный пайп блокирует процесс LS.
+	    // Заодно лог пригодится при диагностике зависаний.
+	    var logDir = plugin.getAppDir().resolve("logs");
+	    java.nio.file.Files.createDirectories(logDir);
+	    builder.redirectError(logDir.resolve("ls-stderr-" + mode.getId() + ".log").toFile());
+	    process = builder.start();
 	    if (!process.waitFor(2, TimeUnit.SECONDS) && process.isAlive()) {
 		// процесс жив и не вышел за 2 с — для LS это норма
 		return;
 	    }
 	    if (!process.isAlive()) {
-		BSLPlugin.createWarningStatus("Не удалалось запустить процесс с BSL LS. Процесс был аварийно завершен.");
+		BSLPlugin.createWarningStatus("Не удалалось запустить процесс с BSL LS. Процесс был аварийно завершен."
+			+ " Лог: " + logDir.resolve("ls-stderr-" + mode.getId() + ".log"));
 	    }
 	} catch (IOException e) {
 	    BSLPlugin.createErrorStatus("Не удалось запустить процесс BSL LS", e);
