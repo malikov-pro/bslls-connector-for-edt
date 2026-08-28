@@ -92,6 +92,46 @@ public class BSLPlugin extends Plugin {
 	return new Status(IStatus.WARNING, PLUGIN_ID, 0, message, null);
     }
 
+    /** Пишет статус в журнал ошибок Eclipse («Журнал ошибок» / .metadata/.log). */
+    public static void log(IStatus status) {
+	var instance = plugin;
+	if (instance == null) {
+	    return;
+	}
+	var eclipseLog = instance.getLog();
+	if (eclipseLog != null) {
+	    eclipseLog.log(status);
+	}
+    }
+
+    public static void logError(String message, Throwable throwable) {
+	log(createErrorStatus(message, throwable));
+    }
+
+    public static void logWarning(String message) {
+	log(createWarningStatus(message));
+    }
+
+    public static void logWarning(String message, Exception throwable) {
+	log(createWarningStatus(message, throwable));
+    }
+
+    public static boolean isDebugEnabled() {
+	var instance = plugin;
+	if (instance == null || instance.preferenceStore == null) {
+	    return false;
+	}
+	return instance.preferenceStore.getBoolean(BSLPreferencePage.DEBUG);
+    }
+
+    /** Отладочное сообщение: в журнал попадает только при включённой настройке «Отладка». */
+    public static void debug(String message) {
+	if (!isDebugEnabled()) {
+	    return;
+	}
+	log(new Status(IStatus.INFO, PLUGIN_ID, 0, message, null));
+    }
+
     @Override
     public void start(BundleContext bundleContext) throws Exception {
 	plugin = this;
@@ -131,7 +171,7 @@ public class BSLPlugin extends Plugin {
 	try {
 	    Thread.sleep(value);
 	} catch (Exception e) {
-	    createWarningStatus(e.getMessage());
+	    logWarning(e.getMessage());
 	}
     }
 
@@ -169,6 +209,7 @@ public class BSLPlugin extends Plugin {
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
 	preferenceStore.setDefault(BSLPreferencePage.WEBSOCKET_URL, BSLPreferencePage.DEFAULT_WEBSOCKET_URL);
+	preferenceStore.setDefault(BSLPreferencePage.DEBUG, false);
     }
 
     private void prepareForStart() {
@@ -177,7 +218,7 @@ public class BSLPlugin extends Plugin {
 	try {
 	    searchConfigurationFile();
 	} catch (IOException e) {
-	    createErrorStatus(e.getMessage(), e);
+	    logError(e.getMessage(), e);
 	}
     }
 

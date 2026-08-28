@@ -122,7 +122,7 @@ public class WebSocketLspTransport implements Closeable {
 		try {
 		    deliverFromServer(payload);
 		} catch (IOException e) {
-		    BSLPlugin.createErrorStatus("Ошибка чтения LSP с WebSocket", e);
+		    BSLPlugin.logError("Ошибка чтения LSP с WebSocket", e);
 		    open = false;
 		}
 	    }
@@ -140,7 +140,7 @@ public class WebSocketLspTransport implements Closeable {
 	@Override
 	public void onError(WebSocket webSocket, Throwable error) {
 	    open = false;
-	    BSLPlugin.createErrorStatus("Ошибка WebSocket BSL LS", error);
+	    BSLPlugin.logError("Ошибка WebSocket BSL LS", error);
 	    closeQuietly();
 	}
     }

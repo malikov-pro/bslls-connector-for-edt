@@ -46,7 +46,7 @@ public final class LsCheckSupport {
 	    try {
 		acceptIssue(analysis, resultAcceptor, diagnostic, checkId);
 	    } catch (RuntimeException e) {
-		BSLPlugin.createWarningStatus(
+		BSLPlugin.logWarning(
 			"Не удалось добавить замечание BSL LS " + checkId + ": " + e.getMessage(), e);
 	    }
 	}
@@ -68,7 +68,7 @@ public final class LsCheckSupport {
 	try {
 	    offsetParams = BSLCommon.getOffsetByRange(diagnostic.getRange(), analysis.getDocument());
 	} catch (BadLocationException e) {
-	    BSLPlugin.createErrorStatus(e.getMessage(), e);
+	    BSLPlugin.logError(e.getMessage(), e);
 	    return;
 	}
 
@@ -117,7 +117,7 @@ public final class LsCheckSupport {
 	    scheduler.permitDeactivatedCheckRequest(objectId, project);
 	    scheduler.scheduleValidation(project, checkIds, Collections.singleton(objectId), progress);
 	} catch (Exception e) {
-	    BSLPlugin.createWarningStatus("Не удалось поставить проверки BSL LS в очередь: " + e.getMessage(), e);
+	    BSLPlugin.logWarning("Не удалось поставить проверки BSL LS в очередь: " + e.getMessage(), e);
 	}
     }
 

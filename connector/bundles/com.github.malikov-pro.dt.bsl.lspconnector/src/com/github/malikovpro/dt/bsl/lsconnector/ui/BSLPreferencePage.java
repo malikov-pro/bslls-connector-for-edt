@@ -39,6 +39,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String JAVA_OPTS = "JAVA_OPTS";
     public static final String WEBSOCKET_URL = "WEBSOCKET_URL";
     public static final String DEFAULT_WEBSOCKET_URL = "ws://localhost:8025/lsp";
+    public static final String DEBUG = "DEBUG";
 
     private Button nativeRadio;
     private Button jarRadio;
@@ -57,6 +58,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private Button downloadButton;
     private Button replaceButton;
     private Button checkButton;
+    private Button debugButton;
     private Job listJob;
     private Job downloadJob;
     private Job javaProbeJob;
@@ -177,6 +179,21 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	    }
 	});
 
+	var debugGroup = new Group(root, SWT.NONE);
+	debugGroup.setText("Отладка");
+	debugGroup.setLayout(new GridLayout(1, false));
+	debugGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+	debugButton = new Button(debugGroup, SWT.CHECK);
+	debugButton.setText("Вести отладочный журнал");
+	var debugHint = createLabel(debugGroup,
+		"Для обычной работы включать не нужно. Отладочные сообщения плагина (команда запуска BSL LS, запуск LSP)"
+			+ " пишутся в «Журнал ошибок» и в файл .metadata/.log воркспейса. Ошибки и предупреждения"
+			+ " попадают в журнал всегда. stderr процесса BSL LS: ~/.bsl-connector-for-edt/logs/.");
+	var debugHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+	debugHintData.widthHint = 420;
+	debugHint.setLayoutData(debugHintData);
+
 	loadValues();
 	updateVisibility();
 	refreshStatus();
@@ -207,6 +224,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	javaCommandText.setText("java");
 	javaOptsText.setText("");
 	websocketUrlText.setText(DEFAULT_WEBSOCKET_URL);
+	debugButton.setSelection(false);
 	replaceRequested = false;
 	updateVisibility();
 	refreshStatus();
@@ -240,6 +258,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	javaOptsText.setText(store.getString(JAVA_OPTS));
 	var url = store.getString(WEBSOCKET_URL);
 	websocketUrlText.setText(url == null || url.isBlank() ? DEFAULT_WEBSOCKET_URL : url);
+	debugButton.setSelection(store.getBoolean(DEBUG));
     }
 
     private boolean savePreferences() {
@@ -249,6 +268,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	store.setValue(JAVA_OPTS, javaOptsText.getText().trim());
 	var url = websocketUrlText.getText().trim();
 	store.setValue(WEBSOCKET_URL, url.isEmpty() ? DEFAULT_WEBSOCKET_URL : url);
+	store.setValue(DEBUG, debugButton.getSelection());
 	return true;
     }
 
@@ -526,8 +546,10 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	}
     }
 
-    private static void createLabel(Composite parent, String text) {
-	new Label(parent, SWT.NONE).setText(text);
+    private static Label createLabel(Composite parent, String text) {
+	var label = new Label(parent, SWT.NONE);
+	label.setText(text);
+	return label;
     }
 
     private static Text createText(Composite parent) {

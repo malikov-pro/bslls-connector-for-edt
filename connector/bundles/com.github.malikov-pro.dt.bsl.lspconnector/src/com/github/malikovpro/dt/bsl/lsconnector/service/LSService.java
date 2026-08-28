@@ -77,7 +77,7 @@ public class LSService {
 		connector.exit();
 	    }
 	} catch (Exception e) {
-	    BSLPlugin.createWarningStatus("Остановка BSL LS: " + e.getMessage());
+	    BSLPlugin.logWarning("Остановка BSL LS: " + e.getMessage());
 	}
 	windowsEventService.stop();
 	if (process != null && process.isAlive()) {
@@ -134,13 +134,13 @@ public class LSService {
 	var pathToLSP = findCachedArtifact(mode);
 
 	if (pathToLSP.isEmpty()) {
-	    BSLPlugin.createWarningStatus(
+	    BSLPlugin.logWarning(
 		    "BSL Language Server не найден в ~/.bsl-connector-for-edt. Выберите релиз в настройках.");
 	    return;
 	}
 
 	if (pathToConfiguration.isPresent() && !pathToConfiguration.get().toFile().exists()) {
-	    BSLPlugin.createWarningStatus("Файл конфигурации BSL LS не найден: " + pathToConfiguration.get()
+	    BSLPlugin.logWarning("Файл конфигурации BSL LS не найден: " + pathToConfiguration.get()
 		    + ". Проверьте путь в настройках (.bsl-language-server.json).");
 	}
 
@@ -157,7 +157,8 @@ public class LSService {
 	    arguments.add(pathToConfiguration.get().toString());
 	}
 
-	BSLPlugin.createWarningStatus(arguments.toString());
+    // Командная строка запуска — только при включённой настройке «Отладка».
+    BSLPlugin.debug("Команда запуска BSL LS: " + arguments);
 
 	try {
 	    var builder = new ProcessBuilder()
@@ -174,11 +175,11 @@ public class LSService {
 		return;
 	    }
 	    if (!process.isAlive()) {
-		BSLPlugin.createWarningStatus("Не удалалось запустить процесс с BSL LS. Процесс был аварийно завершен."
+		BSLPlugin.logWarning("Не удалалось запустить процесс с BSL LS. Процесс был аварийно завершен."
 			+ " Лог: " + logDir.resolve("ls-stderr-" + mode.getId() + ".log"));
 	    }
 	} catch (IOException e) {
-	    BSLPlugin.createErrorStatus("Не удалось запустить процесс BSL LS", e);
+	    BSLPlugin.logError("Не удалось запустить процесс BSL LS", e);
 	} catch (InterruptedException e) {
 	    Thread.currentThread().interrupt();
 	}
@@ -200,7 +201,7 @@ public class LSService {
 	    webSocketTransport = WebSocketLspTransport.connect(URI.create(url));
 	    startConnector(webSocketTransport.getInputStream(), webSocketTransport.getOutputStream());
 	} catch (Exception e) {
-	    BSLPlugin.createErrorStatus("Не удалось подключиться к BSL LS по WebSocket: " + url, e);
+	    BSLPlugin.logError("Не удалось подключиться к BSL LS по WebSocket: " + url, e);
 	    if (webSocketTransport != null) {
 		webSocketTransport.close();
 		webSocketTransport = null;
@@ -217,13 +218,13 @@ public class LSService {
 	    // Ждём ответ ограниченно: зависший LS не должен блокировать вызывающий поток навсегда.
 	    future.get(INIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 	} catch (java.util.concurrent.TimeoutException e) {
-	    BSLPlugin.createWarningStatus("BSL LS не ответил на initialize за " + INIT_TIMEOUT_SECONDS
+	    BSLPlugin.logWarning("BSL LS не ответил на initialize за " + INIT_TIMEOUT_SECONDS
 		    + " с. Процесс остановлен — проверьте режим запуска и дистрибутив.");
 	    stop();
 	} catch (InterruptedException e) {
 	    Thread.currentThread().interrupt();
 	} catch (Exception e) {
-	    BSLPlugin.createWarningStatus("Ошибка инициализации BSL LS: " + e.getMessage());
+	    BSLPlugin.logWarning("Ошибка инициализации BSL LS: " + e.getMessage());
 	}
     }
 

@@ -43,6 +43,8 @@ public class BSLConnector {
     private static final int DEFAULT_SMALL_TIMEOUT = 2;
     private static final String LAUNCHER_NAME = "BSLLanguageLauncher";
     private static final int FIRST_DOCUMENT_VERSION = 0;
+    private static final String TRACE_OFF = "off";
+    private static final String TRACE_VERBOSE = "verbose";
 
     /** Версии документов по uri — требование LSP (VersionedTextDocumentIdentifier). */
     private final java.util.concurrent.ConcurrentHashMap<String, Integer> documentVersions =
@@ -62,7 +64,7 @@ public class BSLConnector {
     }
 
     public void startInThread() {
-	BSLPlugin.createWarningStatus("Запуск LSP");
+	BSLPlugin.debug("Запуск LSP");
 	// launcher и прокси создаём синхронно: после startInThread() сервер обязан быть доступен.
 	// Раньше это делал фоновый поток — initialize() успевал упасть с NPE (server == null).
 	launcher = LSPLauncher.createClientLauncher(client, in, out);
@@ -80,7 +82,8 @@ public class BSLConnector {
 
 	var params = new InitializeParams();
 	params.setProcessId((int) ProcessHandle.current().pid());
-	params.setTrace("verbose"); // TODO:вынести в константы
+	// LSP trace: подробный только при включённой отладке
+	params.setTrace(BSLPlugin.isDebugEnabled() ? TRACE_VERBOSE : TRACE_OFF);
 	params.setRootUri(rootUri.toString());
 
 	var serverCapabilities = new ClientCapabilities();
@@ -158,7 +161,7 @@ public class BSLConnector {
 		return report.getRelatedFullDocumentDiagnosticReport().getItems();
 	    }
 	} catch (Exception e) {
-	    BSLPlugin.createErrorStatus(e.getMessage(), e);
+	    BSLPlugin.logError(e.getMessage(), e);
 	}
 	return Collections.emptyList();
     }
@@ -173,8 +176,8 @@ public class BSLConnector {
 	try {
 	    futureTask.get(timeoutInSeconds, TimeUnit.SECONDS);
 	    } catch (Exception e){
-	        e.printStackTrace();
-	        futureTask.cancel(true);
+		BSLPlugin.logError("Ошибка LSP-запроса", e);
+		futureTask.cancel(true);
 	    }
 	threadpool.shutdown();
     }
@@ -186,9 +189,9 @@ public class BSLConnector {
 		future.get();
 		return;
 	    } catch (InterruptedException e) {
-		BSLPlugin.createErrorStatus(e.getMessage(), e);
+		BSLPlugin.logError(e.getMessage(), e);
 	    } catch (ExecutionException e) {
-		BSLPlugin.createErrorStatus(e.getMessage(), e);
+		BSLPlugin.logError(e.getMessage(), e);
 	    }
 	}
     }

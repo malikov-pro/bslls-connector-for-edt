@@ -138,7 +138,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 		rewriting = false;
 	    }
 	} catch (BadLocationException e) {
-	    BSLPlugin.createWarningStatus("Не удалось отменить подавление BSL LS: " + e.getMessage(), e);
+	    BSLPlugin.logWarning("Не удалось отменить подавление BSL LS: " + e.getMessage(), e);
 	}
     }
 

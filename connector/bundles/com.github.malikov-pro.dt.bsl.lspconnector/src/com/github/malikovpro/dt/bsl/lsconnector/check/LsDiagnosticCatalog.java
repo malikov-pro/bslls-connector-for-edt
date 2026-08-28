@@ -78,7 +78,7 @@ public final class LsDiagnosticCatalog {
 		}
 	    }
 	} catch (Exception e) {
-	    BSLPlugin.createErrorStatus("Не удалось прочитать каталог диагностик BSL LS", e);
+	    BSLPlugin.logError("Не удалось прочитать каталог диагностик BSL LS", e);
 	}
 	return result;
     }
