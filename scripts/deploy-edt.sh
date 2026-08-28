@@ -15,6 +15,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_REPO="$ROOT/connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository"
 FEATURE_IU="com.github.malikov-pro.dt.bsl.lsconnector.feature.group"
+BUNDLE_ID="com.github.malikov-pro.dt.bsl.lspconnector"
 # Тестовый EDT-воркспейс: в нём чистится журнал (.metadata/.log) при деплое.
 TEST_WORKSPACE="$HOME/.local/share/1C/1cedtstart/projects/test_1c"
 
@@ -91,11 +92,39 @@ log "Установка IU: $FEATURE_IU"
 
 # Инсталляции 1cedtstart хранят артефакты в общем пуле ~/.p2/pool,
 # а список активных бандлов ведут в bundles.info — проверяем по нему.
-EXPECTED_JAR="$(ls "$REPO"/plugins/com.github.malikov-pro.dt.bsl.lspconnector_*.jar | tail -n 1)"
+EXPECTED_JAR="$(ls "$REPO"/plugins/${BUNDLE_ID}_*.jar | tail -n 1)"
 EXPECTED_VER="$(basename "$EXPECTED_JAR" .jar)"
 BUNDLES_INFO="$EDT/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info"
 if ! grep -qF "$EXPECTED_VER" "$BUNDLES_INFO"; then
     die "в $BUNDLES_INFO нет $EXPECTED_VER"
+fi
+
+# Дочистка мусора от прежних установок: p2 director снимает фичу, но в
+# bundles.info и общем пуле остаются старые jar бандла — каждый старт EDT
+# пишет «Ещё один синглтон выбранного комплекта». Убираем устаревшие записи
+# этой инсталляции и jar, на которые не ссылается ни один bundles.info
+# известных инсталляций (в пуле могут жить артефакты других EDT, например 2026.1).
+sed -i "/${BUNDLE_ID},/ { /${EXPECTED_VER}/!d; }" "$BUNDLES_INFO"
+
+REFERENCED="$(mktemp)"
+for info in "$BUNDLES_INFO" \
+    "$HOME/.local/share/1C/1cedtstart/installations/"1C_EDT*/*/configuration/org.eclipse.equinox.simpleconfigurator/bundles.info; do
+    [[ -f "$info" ]] || continue
+    grep -hF "$BUNDLE_ID," "$info" >> "$REFERENCED" || true
+done
+
+REMOVED=0
+for jar in "$HOME/.p2/pool/plugins/${BUNDLE_ID}_"*.jar; do
+    [[ -f "$jar" ]] || continue
+    base="$(basename "$jar")"
+    if ! grep -qF "$base" "$REFERENCED"; then
+        rm -f "$jar"
+        REMOVED=$((REMOVED + 1))
+    fi
+done
+rm -f "$REFERENCED"
+if [[ "$REMOVED" -gt 0 ]]; then
+    log "Удалено устаревших jar из пула: $REMOVED"
 fi
 
 log "ГОТОВО, установлен: $(basename "$EXPECTED_JAR")"
