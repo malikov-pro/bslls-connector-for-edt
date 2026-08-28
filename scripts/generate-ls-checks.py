@@ -529,6 +529,12 @@ def plugin_xml(rows: list[tuple[str, str, str, str]]) -> str:
       </externalValidator>
    </extension>
    <extension
+         point="org.eclipse.ui.startup">
+      <startup
+            class="com.github.malikovpro.dt.bsl.lsconnector.listener.EarlyStartup">
+      </startup>
+   </extension>
+   <extension
          point="com.e1c.g5.v8.dt.check.checks">
       <category
             id="com.github.malikov-pro.dt.bsl.lsconnector.checks"
