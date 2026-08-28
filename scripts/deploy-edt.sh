@@ -5,6 +5,7 @@
 # Использование:
 #   bash scripts/deploy-edt.sh                          # авто-поиск EDT 2025.2
 #   bash scripts/deploy-edt.sh --edt "/путь/к/1cedt"    # своя инсталляция (каталог с 1cedt)
+#   bash scripts/deploy-edt.sh --workspace "/путь/к/ws" # свой EDT-воркспейс для чистки журнала
 #
 # Репозиторий берётся последний собранный:
 #   connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository
@@ -14,11 +15,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEFAULT_REPO="$ROOT/connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository"
 FEATURE_IU="com.github.malikov-pro.dt.bsl.lsconnector.feature.group"
+# Тестовый EDT-воркспейс: в нём чистится журнал (.metadata/.log) при деплое.
+TEST_WORKSPACE="$HOME/.local/share/1C/1cedtstart/projects/test_1c"
 
 REPO=""
 EDT=""
 
-usage() { sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
+usage() { sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0; }
 log() { echo "[deploy] $*"; }
 die() { echo "[deploy] ОШИБКА: $*" >&2; exit 1; }
 
@@ -26,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --edt)  [[ $# -ge 2 ]] || die "--edt требует значение"; EDT="$2"; shift 2 ;;
         --repo) [[ $# -ge 2 ]] || die "--repo требует значение"; REPO="$2"; shift 2 ;;
+        --workspace) [[ $# -ge 2 ]] || die "--workspace требует значение"; TEST_WORKSPACE="$2"; shift 2 ;;
         -h|--help) usage ;;
         *)      die "Неизвестный флаг: $1 (см. --help)" ;;
     esac
@@ -51,6 +55,23 @@ fi
 REPO_URI="file://$(cd "$REPO" && pwd)"
 log "EDT        : $EDT"
 log "Репозиторий: $REPO_URI"
+
+# Логи прошлых прогонов мешают разбору: чистим их здесь, чтобы после следующего
+# запуска EDT в журналах остался только текущий прогон. EDT уже закрыта (см. выше).
+LOG_DIR="$HOME/.bsl-connector-for-edt/logs"
+WS_LOG_DIR="$TEST_WORKSPACE/.metadata"
+cleaned=0
+if compgen -G "$LOG_DIR/*.log" >/dev/null; then
+    rm -f "$LOG_DIR"/*.log
+    log "Очищены логи LS: ~/.bsl-connector-for-edt/logs/"
+    cleaned=1
+fi
+if [[ -d "$WS_LOG_DIR" ]] && compgen -G "$WS_LOG_DIR/.log*" >/dev/null; then
+    rm -f "$WS_LOG_DIR"/.log*
+    log "Очищен журнал EDT-воркспейса: $TEST_WORKSPACE/.metadata/.log"
+    cleaned=1
+fi
+[[ "$cleaned" -eq 1 ]] || log "Логов прошлых прогонов нет"
 
 # Фича закрепляет точную версию бандла (qualifier меняется каждой сборкой),
 # поэтому старую копию снимаем всегда; если её нет — просто игнорируем ошибку.
@@ -80,3 +101,4 @@ fi
 log "ГОТОВО, установлен: $(basename "$EXPECTED_JAR")"
 log "Запустите эту EDT и проверьте:"
 log "  Окно → Параметры → Коннектор BSL LS; сохранение BSL-модуля → [BSL LS] в «Проблемах конфигурации»."
+log "Логи чистые, наполнятся этим прогоном: $TEST_WORKSPACE/.metadata/.log и ~/.bsl-connector-for-edt/logs/."

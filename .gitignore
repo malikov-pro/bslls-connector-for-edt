@@ -12,6 +12,9 @@ connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector/check.descriptions/
 # Локальные клоны для анализа (не часть проекта)
 /_source/
 
+# Рабочие заметки ревизии (не часть проекта)
+/_revision/
+
 # Служебные проекты агрегаторов от импорта в Eclipse/PDE (m2e)
 /connector/bundles/.project
 /connector/features/.project
