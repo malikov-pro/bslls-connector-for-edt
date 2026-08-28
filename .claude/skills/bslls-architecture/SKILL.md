@@ -16,7 +16,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 |---|---|---|
 | *(корень)* | `BSLPlugin` — активатор, доступ к сервисам, `~/.bsl-connector-for-edt`; `BSLLsCheck` — запасная ICheck «Прочие диагностики BSL LS» для кодов вне каталога; `BSLValidator` — внешний Xtext-валидатор модулей | активатор — не свалка утилит |
 | `check/` | Мост «диагностика LS → проверка EDT»: `BslLsDiagnosticCheck` (одна BasicCheck на код LS, инстанцируется из plugin.xml), `LsDiagnosticCatalog` (читает `ls-diagnostics.tsv`, `MESSAGE_PREFIX`), `LsCheckSupport`, `LsModuleAnalyzer`, `LsSkipCheck` (regex регионов подавления), `LsSuppressionComments` (разбор строки `//@skip-check`), `LsDiagnosticInfo` | всё генерируемое живёт рядом: `plugin.xml` + tsv |
-| `listener/` | Реакция на редактор пользователя: `LsSkipCheckRewriter` (правит вставленную EDT строку `//@skip-check`), `PageEventListener`, `WindowEventListener`, `OpenEditorTrigger` | правят файл пользователя на диске — осторожно |
+| `listener/` | Реакция на редактор пользователя: `LsSkipCheckRewriter` (дополняет вставку EDT регионами `// BSLLS:Код-off/on` вокруг диапазона ошибки из LS), `PageEventListener`, `WindowEventListener`, `OpenEditorTrigger` | правят файл пользователя на диске — осторожно |
 | `lsp/` | Транспорт LSP4J: `BSLConnector`, `BSLLanguageClient`, `WebSocketLspTransport` | WebSocket идёт мимо кэша и GitHub |
 | `service/` | `LSService` — жизненный цикл процесса LS (`ensureStarted/start/stop/restart`, все методы `synchronized`); `LsStatusService`, `WindowsEventService`, `UpdateCheckResult` | рестарт дергается из настроек и статус-бара |
 | `ui/` | `BSLPreferenceInitializer/Page` (страница настроек «Коннектор BSL LS»), `LsStatusContribution` (статус-бар) | смена настроек может дергать `LSService.restart()` |
@@ -41,7 +41,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
                                     ├→ LSService (процесс LS: native zip / jar / websocket)
 plugin.xml <check> ×~187 ─→ BslLsDiagnosticCheck ─→ панель «Проблемы конфигурации»
         ↑ generate-ls-checks.py ← third_party/v8std
-«Подавить» в EDT → //@skip-check … → listener/LsSkipCheckRewriter → убирает только коды LS
+«Подавить» в EDT → //@skip-check (остаётся) → listener/LsSkipCheckRewriter → + регионы // BSLLS:Код-off/on вокруг ошибки
 ```
 
 ## Данные вне репозитория

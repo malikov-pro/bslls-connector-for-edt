@@ -34,10 +34,12 @@
 4. **Регионы подавления** `// BSLLS:Код-off … -on`, глобальные
    `// BSLLS:off … -on` — единственный regex в `LsSkipCheck.BSLLS_TOGGLE`
    (регистронезависимый). Менять только вместе с прогоном обоих форматов.
-5. **«Подавить» в EDT:** EDT всегда вставляет `//@skip-check <код>`. Коннектор
-   обязан убирать из этой строки **только коды LS**
-   (`LsSuppressionComments.looksLikeSkipCheckInsert`,
-   `removeLsCodesFromSkipLine`) и никогда не трогать типовые коды EDT.
+5. **«Подавить» в EDT:** EDT всегда вставляет `//@skip-check <код>`. Для
+   диагностик LS коннектор удаляет эту вставку (аналога в типовой EDT нет —
+   строка глушит только нашу ICheck-алиас, который уже не сработает после
+   региона) и добавляет регионы `// BSLLS:Код-off … -on` вокруг диапазона
+   ошибки (`LsSkipCheckRewriter`). Вставку с типовыми кодами EDT не трогаем;
+   если регион вставить не удалось — вставку EDT оставляем.
 6. **XML-entity лимиты уже в `connector/.mvn/jvm.config`** — Maven подхватывает их сам
    (склеивает с MAVEN_OPTS). Дублировать в env не нужно.
 
@@ -48,7 +50,7 @@
 | Где | Почему опасно | Перед правкой |
 |---|---|---|
 | `service/LSService.java` | Жизненный цикл процесса LS (`start/stop/restart/ensureStarted`, все `synchronized`); рестарт дергается из настроек и статуса | Проверить сценарии рестарта при смене режима (native/jar/websocket) |
-| `listener/*` (`LsSkipCheckRewriter`, `PageEventListener`, `WindowEventListener`) | Реагируют на правки редактора пользователя и правят строку `//@skip-check` в его модуле на диске | Прогнать ручной сценарий «Подавить» на известном коде LS и на типовом коде EDT |
+| `listener/*` (`LsSkipCheckRewriter`, `PageEventListener`, `WindowEventListener`) | Реагируют на «Подавить» и правят модуль пользователя на диске: дополняют вставку EDT регионами `// BSLLS:Код-off/on` вокруг диапазона ошибки из LS | Прогнать сценарий «Подавить» на коде LS (регион вокруг строк) и на типовом коде EDT (вставка не тронута); проверить Ctrl+Z |
 | `lsp/WebSocketLspTransport.java`, `BSLConnector.java` | Транспорт к LS; WebSocket не использует кэш и GitHub | Помнить: слоты кэша есть только у native/jar |
 | Смена формата релизов GitHub (`util/GitHubReleases.java`) | Выбор релиза в настройках + скачивание в `~/.bsl-connector-for-edt` (один слот на режим) | Свериться со структурой assets реального релиза BSL LS |
 
