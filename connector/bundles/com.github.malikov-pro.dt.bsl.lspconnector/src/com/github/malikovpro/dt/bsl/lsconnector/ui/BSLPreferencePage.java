@@ -37,19 +37,14 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String LAUNCH_MODE = "LAUNCH_MODE";
     public static final String PATH_TO_JAVA = "PATH_TO_JAVA";
     public static final String JAVA_OPTS = "JAVA_OPTS";
-    public static final String WEBSOCKET_URL = "WEBSOCKET_URL";
-    public static final String DEFAULT_WEBSOCKET_URL = "ws://localhost:8025/lsp";
     public static final String DEBUG = "DEBUG";
 
     private Button nativeRadio;
     private Button jarRadio;
-    private Button websocketRadio;
     private Composite jarComposite;
-    private Composite websocketComposite;
     private Composite cacheComposite;
     private Text javaCommandText;
     private Text javaOptsText;
-    private Text websocketUrlText;
     private Label javaStateLabel;
     private Label javaHintLabel;
     private Label statusLabel;
@@ -90,8 +85,6 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	nativeRadio.setText("Нативный");
 	jarRadio = new Button(modeGroup, SWT.RADIO);
 	jarRadio.setText("JAR");
-	websocketRadio = new Button(modeGroup, SWT.RADIO);
-	websocketRadio.setText("WebSocket");
 
 	var modeListener = new SelectionAdapter() {
 	    @Override
@@ -106,7 +99,6 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	};
 	nativeRadio.addSelectionListener(modeListener);
 	jarRadio.addSelectionListener(modeListener);
-	websocketRadio.addSelectionListener(modeListener);
 
 	jarComposite = new Composite(root, SWT.NONE);
 	jarComposite.setLayout(new GridLayout(3, false));
@@ -127,12 +119,6 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	new Label(jarComposite, SWT.NONE);
 	createLabel(jarComposite, "Java Opts:");
 	javaOptsText = createText(jarComposite);
-
-	websocketComposite = new Composite(root, SWT.NONE);
-	websocketComposite.setLayout(new GridLayout(2, false));
-	websocketComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-	createLabel(websocketComposite, "URL:");
-	websocketUrlText = createText(websocketComposite);
 
 	cacheComposite = new Composite(root, SWT.NONE);
 	cacheComposite.setLayout(new GridLayout(1, false));
@@ -220,10 +206,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     protected void performDefaults() {
 	nativeRadio.setSelection(false);
 	jarRadio.setSelection(true);
-	websocketRadio.setSelection(false);
 	javaCommandText.setText("java");
 	javaOptsText.setText("");
-	websocketUrlText.setText(DEFAULT_WEBSOCKET_URL);
 	debugButton.setSelection(false);
 	replaceRequested = false;
 	updateVisibility();
@@ -253,11 +237,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	var mode = LaunchMode.from(store.getString(LAUNCH_MODE));
 	nativeRadio.setSelection(mode == LaunchMode.NATIVE);
 	jarRadio.setSelection(mode == LaunchMode.JAR);
-	websocketRadio.setSelection(mode == LaunchMode.WEBSOCKET);
 	javaCommandText.setText(store.getString(PATH_TO_JAVA));
 	javaOptsText.setText(store.getString(JAVA_OPTS));
-	var url = store.getString(WEBSOCKET_URL);
-	websocketUrlText.setText(url == null || url.isBlank() ? DEFAULT_WEBSOCKET_URL : url);
 	debugButton.setSelection(store.getBoolean(DEBUG));
     }
 
@@ -266,8 +247,6 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	store.setValue(LAUNCH_MODE, selectedMode().getId());
 	store.setValue(PATH_TO_JAVA, javaCommandText.getText().trim());
 	store.setValue(JAVA_OPTS, javaOptsText.getText().trim());
-	var url = websocketUrlText.getText().trim();
-	store.setValue(WEBSOCKET_URL, url.isEmpty() ? DEFAULT_WEBSOCKET_URL : url);
 	store.setValue(DEBUG, debugButton.getSelection());
 	return true;
     }
@@ -276,32 +255,23 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	if (nativeRadio.getSelection()) {
 	    return LaunchMode.NATIVE;
 	}
-	if (websocketRadio.getSelection()) {
-	    return LaunchMode.WEBSOCKET;
-	}
 	return LaunchMode.JAR;
     }
 
     private void updateVisibility() {
 	var mode = selectedMode();
 	setVisible(jarComposite, mode == LaunchMode.JAR);
-	setVisible(websocketComposite, mode == LaunchMode.WEBSOCKET);
-	setVisible(cacheComposite, mode != LaunchMode.WEBSOCKET);
+	setVisible(cacheComposite, true);
 	var parent = jarComposite.getParent();
 	parent.layout(true, true);
     }
 
-	private void refreshStatus() {
+    private void refreshStatus() {
 	if (statusLabel == null || statusLabel.isDisposed()) {
 	    return;
 	}
+	statusLabel.setForeground(null);
 	var mode = selectedMode();
-	if (mode == LaunchMode.WEBSOCKET) {
-	    statusLabel.setText("Локальный процесс и кэш не используются. Контейнер поднимается отдельно.");
-	    setReleaseControlsVisible(false, false);
-	    return;
-	}
-
 	if (mode == LaunchMode.JAR) {
 	    probeJavaAsync();
 	}

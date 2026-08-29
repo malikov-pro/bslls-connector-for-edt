@@ -18,7 +18,6 @@ public class BSLPreferenceInitializer extends AbstractPreferenceInitializer {
 	node.put(BSLPreferencePage.LAUNCH_MODE, LaunchMode.JAR.getId());
 	node.put(BSLPreferencePage.PATH_TO_JAVA, "java");
 	node.put(BSLPreferencePage.JAVA_OPTS, "");
-	node.put(BSLPreferencePage.WEBSOCKET_URL, BSLPreferencePage.DEFAULT_WEBSOCKET_URL);
 	node.putBoolean(BSLPreferencePage.DEBUG, false);
     }
 

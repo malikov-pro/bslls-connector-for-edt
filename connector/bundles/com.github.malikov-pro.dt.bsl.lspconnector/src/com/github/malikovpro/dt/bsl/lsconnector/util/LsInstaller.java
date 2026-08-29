@@ -23,9 +23,6 @@ public final class LsInstaller {
 
     public static Path install(Path appDir, LaunchMode mode, GitHubRelease release, IProgressMonitor monitor)
 	    throws IOException {
-	if (mode == LaunchMode.WEBSOCKET) {
-	    throw new IllegalArgumentException("Режим WebSocket не загружает дистрибутив");
-	}
 	if (!release.hasAsset(mode)) {
 	    throw new IOException("В релизе " + release.getTag() + " нет файла " + release.assetFileName(mode));
 	}

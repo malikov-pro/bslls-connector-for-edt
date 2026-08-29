@@ -208,7 +208,6 @@ public class BSLPlugin extends Plugin {
 	preferenceStore.setDefault(BSLPreferencePage.LAUNCH_MODE, LaunchMode.JAR.getId());
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
-	preferenceStore.setDefault(BSLPreferencePage.WEBSOCKET_URL, BSLPreferencePage.DEFAULT_WEBSOCKET_URL);
 	preferenceStore.setDefault(BSLPreferencePage.DEBUG, false);
     }
 

@@ -49,9 +49,9 @@
 
 | Где | Почему опасно | Перед правкой |
 |---|---|---|
-| `service/LSService.java` | Жизненный цикл процесса LS (`start/stop/restart/ensureStarted`, все `synchronized`); рестарт дергается из настроек и статуса | Проверить сценарии рестарта при смене режима (native/jar/websocket) |
+| `service/LSService.java` | Жизненный цикл процесса LS (`start/stop/restart/ensureStarted`, все `synchronized`); рестарт дергается из настроек и статуса | Проверить сценарии рестарта при смене режима (native/jar) |
 | `listener/*` (`LsSkipCheckRewriter`, `PageEventListener`, `WindowEventListener`) | Реагируют на «Подавить» и правят модуль пользователя на диске: дополняют вставку EDT регионами `// BSLLS:Код-off/on` вокруг диапазона ошибки из LS | Прогнать сценарий «Подавить» на коде LS (регион вокруг строк) и на типовом коде EDT (вставка не тронута); проверить Ctrl+Z |
-| `lsp/WebSocketLspTransport.java`, `BSLConnector.java` | Транспорт к LS; WebSocket не использует кэш и GitHub | Помнить: слоты кэша есть только у native/jar |
+| `lsp/BSLConnector.java` | Транспорт LSP4J к процессу LS | Помнить: слоты кэша есть только у native/jar |
 | Смена формата релизов GitHub (`util/GitHubReleases.java`) | Выбор релиза в настройках + скачивание в `~/.bsl-connector-for-edt` (один слот на режим) | Свериться со структурой assets реального релиза BSL LS |
 
 ---

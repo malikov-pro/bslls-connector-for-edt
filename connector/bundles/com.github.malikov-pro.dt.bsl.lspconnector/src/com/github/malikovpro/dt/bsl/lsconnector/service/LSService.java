@@ -3,7 +3,6 @@ package com.github.malikovpro.dt.bsl.lsconnector.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,6 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLLanguageClient;
-import com.github.malikovpro.dt.bsl.lsconnector.lsp.WebSocketLspTransport;
 import com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LaunchMode;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LsCache;
@@ -34,7 +32,6 @@ public class LSService {
     private final ScopedPreferenceStore preferenceStore;
     private Process process;
     private BSLConnector connector;
-    private WebSocketLspTransport webSocketTransport;
 
     public BSLConnector getConnector() {
 	return connector;
@@ -58,12 +55,8 @@ public class LSService {
 	if (isLaunched()) {
 	    return;
 	}
-	if (getLaunchMode() == LaunchMode.WEBSOCKET) {
-	    connectWebSocket();
-	} else {
-	    createProcess();
-	    connectToProcess();
-	}
+	createProcess();
+	connectToProcess();
 	if (isLaunched()) {
 	    windowsEventService.start();
 	}
@@ -90,9 +83,6 @@ public class LSService {
 		Thread.currentThread().interrupt();
 		process.destroyForcibly();
 	    }
-	}
-	if (webSocketTransport != null) {
-	    webSocketTransport.close();
 	}
 	clear();
 	plugin.getStatusService().fireChanged();
@@ -121,9 +111,6 @@ public class LSService {
     }
 
     public boolean isLaunched() {
-	if (getLaunchMode() == LaunchMode.WEBSOCKET) {
-	    return webSocketTransport != null && webSocketTransport.isOpen();
-	}
 	return process != null && process.isAlive();
     }
 
@@ -192,23 +179,6 @@ public class LSService {
 	startConnector(process.getInputStream(), process.getOutputStream());
     }
 
-    private void connectWebSocket() {
-	var url = preferenceStore.getString(BSLPreferencePage.WEBSOCKET_URL);
-	if (url == null || url.isBlank()) {
-	    url = BSLPreferencePage.DEFAULT_WEBSOCKET_URL;
-	}
-	try {
-	    webSocketTransport = WebSocketLspTransport.connect(URI.create(url));
-	    startConnector(webSocketTransport.getInputStream(), webSocketTransport.getOutputStream());
-	} catch (Exception e) {
-	    BSLPlugin.logError("Не удалось подключиться к BSL LS по WebSocket: " + url, e);
-	    if (webSocketTransport != null) {
-		webSocketTransport.close();
-		webSocketTransport = null;
-	    }
-	}
-    }
-
     private void startConnector(InputStream in, OutputStream out) {
 	var client = new BSLLanguageClient();
 	connector = new BSLConnector(client, in, out);
@@ -231,7 +201,6 @@ public class LSService {
     private void clear() {
 	process = null;
 	connector = null;
-	webSocketTransport = null;
     }
 
     private Optional<Path> findCachedArtifact(LaunchMode mode) {

@@ -166,9 +166,6 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	if (service == null) {
 	    return "BSL LS" + suffix;
 	}
-	if (service.getLaunchMode() == LaunchMode.WEBSOCKET) {
-	    return (running ? "BSL LS ws" : "BSL LS") + suffix;
-	}
 	return (running ? "BSL LS" : "BSL LS") + suffix;
     }
 
@@ -189,9 +186,6 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
     private static String modeLabel(LaunchMode mode) {
 	if (mode == LaunchMode.NATIVE) {
 	    return "нативный";
-	}
-	if (mode == LaunchMode.WEBSOCKET) {
-	    return "WebSocket";
 	}
 	return "JAR";
     }

@@ -2,8 +2,7 @@ package com.github.malikovpro.dt.bsl.lsconnector.util;
 
 public enum LaunchMode {
     NATIVE("native"),
-    JAR("jar"),
-    WEBSOCKET("websocket");
+    JAR("jar");
 
     private final String id;
 

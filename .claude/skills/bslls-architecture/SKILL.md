@@ -17,10 +17,10 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 | *(корень)* | `BSLPlugin` — активатор, доступ к сервисам, `~/.bsl-connector-for-edt`; `BSLLsCheck` — запасная ICheck «Прочие диагностики BSL LS» для кодов вне каталога; `BSLValidator` — внешний Xtext-валидатор модулей | активатор — не свалка утилит |
 | `check/` | Мост «диагностика LS → проверка EDT»: `BslLsDiagnosticCheck` (одна BasicCheck на код LS, инстанцируется из plugin.xml), `LsDiagnosticCatalog` (читает `ls-diagnostics.tsv`, `MESSAGE_PREFIX`), `LsCheckSupport`, `LsModuleAnalyzer`, `LsSkipCheck` (regex регионов подавления), `LsSuppressionComments` (разбор строки `//@skip-check`), `LsDiagnosticInfo` | всё генерируемое живёт рядом: `plugin.xml` + tsv |
 | `listener/` | Реакция на редактор пользователя: `LsSkipCheckRewriter` (дополняет вставку EDT регионами `// BSLLS:Код-off/on` вокруг диапазона ошибки из LS), `PageEventListener`, `WindowEventListener`, `OpenEditorTrigger` | правят файл пользователя на диске — осторожно |
-| `lsp/` | Транспорт LSP4J: `BSLConnector`, `BSLLanguageClient`, `WebSocketLspTransport` | WebSocket идёт мимо кэша и GitHub |
+| `lsp/` | Транспорт LSP4J: `BSLConnector`, `BSLLanguageClient` | потоки процесса LS |
 | `service/` | `LSService` — жизненный цикл процесса LS (`ensureStarted/start/stop/restart`, все методы `synchronized`); `LsStatusService`, `WindowsEventService`, `UpdateCheckResult` | рестарт дергается из настроек и статус-бара |
 | `ui/` | `BSLPreferenceInitializer/Page` (страница настроек «Коннектор BSL LS»), `LsStatusContribution` (статус-бар) | смена настроек может дергать `LSService.restart()` |
-| `util/` | `LaunchMode` (NATIVE/JAR/WEBSOCKET; по умолчанию JAR), `LsCache` (слоты в `~/.bsl-connector-for-edt`, один слот на режим), `LsInstaller`, `GitHubRelease(s)`, `VersionCompare`, `LsVersionProbe`, `BSLCommon` | релизы BSL LS скачиваются только после явного выбора пользователем |
+| `util/` | `LaunchMode` (NATIVE/JAR; по умолчанию JAR), `LsCache` (слоты в `~/.bsl-connector-for-edt`, один слот на режим), `LsInstaller`, `GitHubRelease(s)`, `VersionCompare`, `LsVersionProbe`, `BSLCommon` | релизы BSL LS скачиваются только после явного выбора пользователем |
 
 ## Два канала замечаний (не склеивать!)
 
@@ -38,7 +38,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 
 ```
 редактор/сохранение → BSLValidator ─┐
-                                    ├→ LSService (процесс LS: native zip / jar / websocket)
+                                    ├→ LSService (процесс LS: native zip / jar)
 plugin.xml <check> ×~187 ─→ BslLsDiagnosticCheck ─→ панель «Проблемы конфигурации»
         ↑ generate-ls-checks.py ← third_party/v8std
 «Подавить» в EDT → //@skip-check (остаётся) → listener/LsSkipCheckRewriter → + регионы // BSLLS:Код-off/on вокруг ошибки

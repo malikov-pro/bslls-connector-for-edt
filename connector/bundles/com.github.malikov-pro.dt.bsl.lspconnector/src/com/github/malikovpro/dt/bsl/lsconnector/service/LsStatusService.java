@@ -124,9 +124,6 @@ public class LsStatusService {
 
     private void fillLsUpdate(UpdateCheckResult result) throws Exception {
 	var mode = getLaunchMode();
-	if (mode == LaunchMode.WEBSOCKET) {
-	    return;
-	}
 	var current = cachedLsVersion;
 	if (current == null || current.isBlank()) {
 	    current = probeLocalVersion();
@@ -180,9 +177,6 @@ public class LsStatusService {
 	    return "";
 	}
 	var mode = getLaunchMode();
-	if (mode == LaunchMode.WEBSOCKET) {
-	    return "";
-	}
 	var artifact = LsCache.findArtifact(plugin.getAppDir(), mode);
 	if (artifact.isEmpty()) {
 	    return "";
