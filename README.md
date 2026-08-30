@@ -18,7 +18,7 @@
 1. Откройте `Справка` -> `Установить новое ПО`.
 2. Введите ссылку:
 ```
-https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
+https://malikov-pro.github.io/bslls-connector-for-edt/
 ```
 3. Нажмите `Добавить`.
 4. Установите флажок на `BSL LS connector for EDT`.
@@ -85,15 +85,20 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 
 ### Публикация сайта обновления
 
-Ссылка установки — это статические файлы p2-репозитория на GitHub Pages:
+Ссылка установки — это статические файлы p2-репозитория на GitHub Pages
+(p2 лежит в корне Pages, как короткая ссылка):
 
 ```
-https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/
+https://malikov-pro.github.io/bslls-connector-for-edt/
 ```
+
+Старый длинный адрес `…/update/bslls-connector-for-edt/latest/` продолжает
+работать: workflow кладёт копию p2 и туда — у уже установленных экземпляров EDT
+этот URL прописан в «Доступных сайтах обновления».
 
 Публикует workflow `deploy-update-site.yml` (запуск: публикация релиза или вручную
-из вкладки Actions): собирает p2 и перезаписывает путь `…/latest/` — EDT видит
-обновление по изменившемуся квалификатору. Для работы нужны:
+из вкладки Actions): собирает p2, кладёт его в корень Pages и перезаписывает
+старый путь — EDT видит обновление по изменившемуся квалификатору. Для работы нужны:
 1. Репозиторий под аккаунтом `malikov-pro`, в его настройках:
    `Settings → Pages → Source: GitHub Actions`.
 2. Секреты `MAVEN_USERNAME` / `MAVEN_CENTRAL_TOKEN` (доступ к реджестри 1С).
