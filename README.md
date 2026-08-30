@@ -1,5 +1,12 @@
 # Коннектор BSL LS для 1С:EDT
 
+[![GitHub all releases](https://img.shields.io/github/downloads/malikov-pro/bslls-connector-for-edt/total)](https://github.com/malikov-pro/bslls-connector-for-edt/releases)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+
+[![Непрерывная интеграция](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/ci.yml/badge.svg)](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/ci.yml)
+[![Релиз](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/release.yml/badge.svg)](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/release.yml)
+[![Deploy Update Site](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/deploy-update-site.yml/badge.svg)](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/deploy-update-site.yml)
+
 Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/).
 Каталог формируется из [v8std](https://v8std.ru/diagnostics/bslls/) и сейчас содержит 186 диагностик.
 
