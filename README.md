@@ -12,8 +12,7 @@
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=coverage)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
 
-Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/).
-Каталог формируется из [v8std](https://v8std.ru/diagnostics/bslls/) и сейчас содержит 186 диагностик.
+Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/), пишет ошибки в совместимый с [EDT-MCP](https://github.com/DitriXNew/EDT-MCP) стек, дополняет описания ошибок для пользователя из [v8std](https://v8std.ru/diagnostics/bslls/).
 
 ## Возможности
 
@@ -84,36 +83,15 @@ https://malikov-pro.github.io/bslls-connector-for-edt/
 * Для диагностик BSL LS коннектор убирает эту вставку и добавляет вместо неё регионы `// BSLLS:<Код>-off` / `// BSLLS:<Код>-on` вокруг диапазона ошибки из ответа LS (аналога диагностики в типовой EDT нет — строка осталась бы мусором). Если LS недоступен, вставка остаётся. Регионы можно писать и вручную: `// BSLLS:DeprecatedCurrentDate-off` … `// BSLLS:DeprecatedCurrentDate-on` и глобальные `// BSLLS:off` … `// BSLLS:on`.
 * **Открыть проверку** открывает карточку диагностики: текст статьи с [v8std.ru](https://v8std.ru/diagnostics/bslls/LineLength/) (раздел `bslls`). В «См.» — URL карточки v8std и документации BSL LS (текст ссылки = сам URL), плюс ссылки из статьи (ИТС / std).
 
-Каталог кодов: [v8std.ru/diagnostics](https://v8std.ru/diagnostics/) (раздел `bslls`). Список в плагине обновляется скриптом `scripts/generate-ls-checks.py`.
+Каталог кодов диагностик: [v8std.ru/diagnostics](https://v8std.ru/diagnostics/) (раздел `bslls`).
 
-### Установка из архива
+### Установка из архива (без интернета)
 
-1. `Справка` → `Установить новое ПО` → `Добавить` → `Архив`.
-2. Укажите zip:
-   `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/com.github.malikov-pro.dt.bsl.lsconnector.repository-0.4.0-SNAPSHOT.zip`
-3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и потом не находит локальные артефакты (`No repository found containing`).
-4. Каждая сборка даёт новый квалификатор (`0.4.0.v20260822191503`). Если EDT пишет **«Все элементы установлены»**, в zip тот же номер, что уже стоит: пересоберите (`mvn clean verify …`) или удалите фичу в `Справка` → `О программе` → `Сведения об установке` и ставьте заново.
-5. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
-
-### Публикация сайта обновления
-
-Ссылка установки — это статические файлы p2-репозитория на GitHub Pages
-(p2 лежит в корне Pages, как короткая ссылка):
-
-```
-https://malikov-pro.github.io/bslls-connector-for-edt/
-```
-
-Старый длинный адрес `…/update/bslls-connector-for-edt/latest/` продолжает
-работать: workflow кладёт копию p2 и туда — у уже установленных экземпляров EDT
-этот URL прописан в «Доступных сайтах обновления».
-
-Публикует workflow `deploy-update-site.yml` (запуск: публикация релиза или вручную
-из вкладки Actions): собирает p2, кладёт его в корень Pages и перезаписывает
-старый путь — EDT видит обновление по изменившемуся квалификатору. Для работы нужны:
-1. Репозиторий под аккаунтом `malikov-pro`, в его настройках:
-   `Settings → Pages → Source: GitHub Actions`.
-2. Секреты `MAVEN_USERNAME` / `MAVEN_CENTRAL_TOKEN` (доступ к реджестри 1С).
+1. Скачайте zip со страницы [Releases](https://github.com/malikov-pro/bslls-connector-for-edt/releases) — файл `…repository-<версия>.zip`.
+2. `Справка` → `Установить новое ПО` → `Добавить` → `Архив` → укажите скачанный zip.
+3. **Снимите** флажок `Обращаться во время инсталляции ко всем сайтам обновления…`. Иначе p2 лезет на `services.1c.dev` (ошибка аутентификации) и не находит локальные артефакты (`No repository found containing`).
+4. Выберите `BSL LS connector for EDT` → `Далее` → `Готово` → перезапустите EDT.
+5. Если EDT пишет **«Все элементы установлены»**, та же версия уже стоит: удалите фичу в `Справка` → `О программе` → `Сведения об установке` и поставьте заново.
 
 ## Разработчикам
 
