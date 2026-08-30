@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # событие release чекаутит default-ветку — собираем именно тег релиза
+          ref: ${{ github.event.release.tag_name || github.ref }}
 
       - name: Установка JDK
         uses: actions/setup-java@v4

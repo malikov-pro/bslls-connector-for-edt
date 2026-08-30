@@ -1,0 +1,77 @@
+name: Релиз
+
+# Пуш тега вида 0.5.0 из main: сборка Tycho → GitHub Release с p2-zip.
+# Публикация релиза сама дёргает deploy-update-site.yml (обновление Pages).
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Актуализация
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Установка JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          architecture: x64
+          # реджестри пакетов 1С
+          server-id: dt_repository
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_CENTRAL_TOKEN
+
+      - name: Кеширование m2
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/default/default.target') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      # каталог check.descriptions генерируется локально и не хранится в git (.gitignore)
+      # скрипт требует сабмодуля third_party/v8std, он чекаутится шагом выше
+      - name: Генерация каталога диагностик
+        run: python3 scripts/generate-ls-checks.py --offline
+
+      # версия релиза = тег: снимаем -SNAPSHOT в pom и MANIFEST/feature
+      # (только в рабочем дереве, коммит не делаем)
+      - name: Версия из тега
+        working-directory: connector
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if ! [[ "${TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Тег «${TAG}» не вида X.Y.Z"; exit 1
+          fi
+          if ! grep -q "<version>${TAG}-SNAPSHOT</version>" pom.xml; then
+            echo "pom в ${TAG} версии ${TAG}-SNAPSHOT — сначала поднимите версию в develop/main"; exit 1
+          fi
+          mvn -B org.eclipse.tycho:tycho-versions-plugin:4.0.5:set-version \
+            -DnewVersion="${TAG}" -DgenerateBackupPoms=false
+
+      # XML-entity лимиты приходят из connector/.mvn/jvm.config
+      - name: Сборка
+        working-directory: connector
+        run: mvn -B clean verify -T 1C -Dtycho.localArtifacts=ignore
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+
+      - name: Публикация релиза
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ZIP=$(ls connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/*.zip)
+          gh release create "${GITHUB_REF_NAME}" "${ZIP}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

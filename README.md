@@ -107,6 +107,33 @@ https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for
 * Доступ к репозиторию EDT (credentials в `connector/bom/settings.xml`)
 * Сабмодуль [zeegin/v8std](https://github.com/zeegin/v8std): `git clone --recurse-submodules …` или `git submodule update --init third_party/v8std`
 
+### Ветки и релизы
+
+* `develop` — рабочая интеграционная ветка (default). Признаки `feature/*` / `fix/*` заводятся от неё.
+* `main` — стабильная: в неё попадают готовые изменения из `develop` (merge по готовности к релизу).
+* Теги `X.Y.Z` ставятся только на `main`.
+
+Релиз — пуш тега из `main`, дальше всё автоматом (workflow `release.yml`):
+сборка Tycho со снятым `-SNAPSHOT`, GitHub Release с p2-zip и автоматическое
+обновление сайта обновления (GitHub Pages).
+
+Порядок выпуска версии (пример `0.5.0`):
+
+```bash
+# 1. В develop поднять версию (обновит pom и MANIFEST/feature):
+cd connector
+mvn org.eclipse.tycho:tycho-versions-plugin:4.0.5:set-version -DnewVersion=0.5.0-SNAPSHOT -DgenerateBackupPoms=false
+# 2. Закоммитить в develop, слить в main и поставить тег:
+git checkout main
+git merge --no-ff develop
+git tag 0.5.0
+git push origin main develop --tags
+```
+
+Workflow сверяет тег с версией в pom: тег `0.5.0` требует `<version>0.5.0-SNAPSHOT</version>` в коммите.
+У релизной сборки версия фиксированная (`set-version` снимает и `-SNAPSHOT`, и `.qualifier`),
+в `develop` остаётся `X.Y.Z-SNAPSHOT` → `Bundle-Version: X.Y.Z.qualifier` — каждая сборка получает свой квалификатор с меткой времени.
+
 ### Целевая платформа в EDT
 
 `Reload Target Platform` есть только в **EDT для разработки плагинов** (PDE). В обычном EDT с конфигурациями 1С этого пункта нет: туда ставится уже собранный p2 (`Справка` → `Установить новое ПО`).
