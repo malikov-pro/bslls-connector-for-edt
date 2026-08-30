@@ -7,6 +7,11 @@
 [![Релиз](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/release.yml/badge.svg)](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/release.yml)
 [![Deploy Update Site](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/deploy-update-site.yml/badge.svg)](https://github.com/malikov-pro/bslls-connector-for-edt/actions/workflows/deploy-update-site.yml)
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=bugs)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=malikov-pro_bslls-connector-for-edt&metric=coverage)](https://sonarcloud.io/summary/new_code?id=malikov-pro_bslls-connector-for-edt)
+
 Плагин включает проверки [BSL LS](https://github.com/1c-syntax/bsl-language-server) в среде разработки [1С:EDT](https://edt.1c.ru/).
 Каталог формируется из [v8std](https://v8std.ru/diagnostics/bslls/) и сейчас содержит 186 диагностик.
 
