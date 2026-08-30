@@ -45,6 +45,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/default/default.target') }}
           restore-keys: ${{ runner.os }}-m2
 
+      # каталог check.descriptions генерируется локально и не хранится в git (.gitignore)
+      # скрипт требует сабмодуля third_party/v8std, он чекаутится шагом выше
+      - name: Генерация каталога диагностик
+        run: python3 scripts/generate-ls-checks.py --offline
+
       # XML-entity лимиты приходят из connector/.mvn/jvm.config
       - name: Сборка
         working-directory: connector
