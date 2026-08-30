@@ -107,3 +107,10 @@ https://malikov-pro.github.io/bslls-connector-for-edt/
 
 Сборка, целевая платформа EDT, ветвление, релизы и каталог диагностик — в
 [Руководстве разработчика](DEVELOPER.md).
+
+## Лицензия
+
+[AGPL-3.0](LICENSE) — та же, что у [BSL LS](https://github.com/1c-syntax/bsl-language-server).
+Проект включает код оригинального
+[dt.bsl.lsconnector](https://github.com/otymko/dt.bsl.lsconnector)
+(MIT © 2020 Oleg Tymko) — его уведомление сохранено в [LICENSE-MIT](LICENSE-MIT).
