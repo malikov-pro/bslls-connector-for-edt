@@ -22,8 +22,7 @@ ICheck** — иначе hover в редакторе дублирует кноп�
 
 | Метод | Тип | Когда выполняется |
 |---|---|---|
-| `validate()` | `NORMAL` | открытие, сохранение и любые «большие» прогоны |
-| `validateExpensive()` | `EXPENSIVE` | только в глубоком анализе (`BslResource.isDeepAnalysing()`) |
+| `validate()` | `NORMAL` | открытие, сохранение и любые «большие» прогоны, включая EXPENSIVE-проходы (накопительная семантика) |
 
 `FAST`-методов коннектор не регистрирует — при наборе текста LS не будится.
 
@@ -37,9 +36,9 @@ ICheck** — иначе hover в редакторе дублирует кноп�
 
 \* «Расширенная проверка модулей» EDT — это EXPENSIVE-проход; из-за накопительности
 в нём выполняются и дешёвые типы, поэтому замечания обновляются после правки.
-Оба наших метода вызывают один и тот же `LsCheckSupport.validateFromXtext`;
-дублирующий заход в LS гасится кэшем `LsModuleAnalyzer` (ключ `uri + hash(content)`).
-Планируется оставить только `NORMAL` — [issue #16](https://github.com/malikov-pro/bslls-connector-for-edt/issues/16).
+Коннектор регистрирует один метод (`NORMAL`): в EXPENSIVE-проходе он выполняется
+и так, отдельный `@Check(EXPENSIVE)` будил бы LS повторно —
+[issue #16](https://github.com/malikov-pro/bslls-connector-for-edt/issues/16).
 
 ## Как коннектор будит BSL LS
 
