@@ -58,6 +58,13 @@ jobs:
           fi
           mvn -B org.eclipse.tycho:tycho-versions-plugin:4.0.5:set-version \
             -DnewVersion="${TAG}" -DgenerateBackupPoms=false
+          # bom — родитель вне реактора, set-version его не обновляет
+          for f in bom/pom.xml pom.xml; do
+            sed -i "s|<version>${TAG}-SNAPSHOT</version>|<version>${TAG}</version>|" "$f"
+          done
+          grep -q "<version>${TAG}</version>" bom/pom.xml || {
+            echo "bom/pom.xml: не удалось проставить версию ${TAG}"; exit 1
+          }
 
       # XML-entity лимиты приходят из connector/.mvn/jvm.config
       - name: Сборка

@@ -33,10 +33,13 @@
 Порядок выпуска версии (пример `0.5.0`):
 
 ```bash
-# 1. В develop поднять версию (обновит pom и MANIFEST/feature):
+# 1. В develop поднять версию (обновит pom, MANIFEST и feature):
 cd connector
 mvn org.eclipse.tycho:tycho-versions-plugin:4.0.5:set-version -DnewVersion=0.5.0-SNAPSHOT -DgenerateBackupPoms=false
-# 2. Закоммитить в develop, слить в main и поставить тег:
+# 2. bom — родитель ВНЕ реактора, set-version его не трогает. Вручную поставить
+#    0.5.0-SNAPSHOT в connector/bom/pom.xml (<version> bom'а) и в <parent><version>
+#    файла connector/pom.xml.
+# 3. Закоммитить в develop, слить в main и поставить тег:
 git checkout main
 git merge --no-ff develop
 git tag 0.5.0
