@@ -3,6 +3,11 @@ name: Deploy Update Site
 on:
   release:
     types: [published]
+  # релиз создаётся workflow'ом с GITHUB_TOKEN, и его событие "release published"
+  # не триггерит другие workflow — поэтому дублируем триггером по пушу тега
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
   workflow_dispatch:
 
 permissions:
