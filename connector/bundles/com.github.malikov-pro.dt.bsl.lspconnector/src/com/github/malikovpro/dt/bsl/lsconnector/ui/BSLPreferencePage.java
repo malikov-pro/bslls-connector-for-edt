@@ -14,6 +14,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.program.Program;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -152,6 +153,24 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	    public void widgetSelected(SelectionEvent e) {
 		replaceRequested = true;
 		refreshStatus();
+	    }
+	});
+
+	var workDirRow = new Composite(cacheComposite, SWT.NONE);
+	workDirRow.setLayout(new GridLayout(2, false));
+	workDirRow.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+	var workDirLabel = createLabel(workDirRow, BSLPlugin.getPlugin().getAppDir().toString());
+	var workDirData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+	workDirData.widthHint = 420;
+	workDirLabel.setLayoutData(workDirData);
+
+	var openWorkDirButton = new Button(workDirRow, SWT.PUSH);
+	openWorkDirButton.setText("Открыть рабочую папку");
+	openWorkDirButton.addSelectionListener(new SelectionAdapter() {
+	    @Override
+	    public void widgetSelected(SelectionEvent e) {
+		Program.launch(BSLPlugin.getPlugin().getAppDir().toString());
 	    }
 	});
 
