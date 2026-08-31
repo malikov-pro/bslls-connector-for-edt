@@ -6,6 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # secrets доступен только в job-level выражениях; в step-level if его нет
+    env:
+      HAS_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
+
     steps:
       - name: Актуализация
         uses: actions/checkout@v4
@@ -49,7 +53,7 @@ jobs:
 
       # конфиг сканера — sonar-project.properties; на форк-PR секретов нет — шаг пропустится
       - name: Анализ SonarCloud
-        if: ${{ secrets.SONAR_TOKEN != '' }}
+        if: ${{ env.HAS_SONAR_TOKEN == 'true' }}
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
