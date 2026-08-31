@@ -128,7 +128,8 @@ public class LSService {
 
 	if (pathToConfiguration.isPresent() && !pathToConfiguration.get().toFile().exists()) {
 	    BSLPlugin.logWarning("Файл конфигурации BSL LS не найден: " + pathToConfiguration.get()
-		    + ". Проверьте путь в настройках (.bsl-language-server.json).");
+		    + ". Конфиг (.bsl-language-server.json) ищется автоматически в корне воркспейса"
+		    + " — проверьте, что файл на месте.");
 	}
 
 	List<String> arguments = new ArrayList<>();
