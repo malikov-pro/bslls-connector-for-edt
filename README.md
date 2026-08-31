@@ -106,6 +106,10 @@ https://malikov-pro.github.io/bslls-connector-for-edt/
 Сборка, целевая платформа EDT, ветвление, релизы и каталог диагностик — в
 [Руководстве разработчика](DEVELOPER.md).
 
+## Статьи о плагине
+
+[Проверки BSL Language Server прямо в 1С:EDT: оживляем коннектор](https://infostart.ru/1c/articles/2776674/) на ![Инфостарт](https://infostart.ru/bitrix/templates/sandbox_empty/assets/tpl/abo/img/logo.svg)
+
 ## Лицензия
 
 [AGPL-3.0](LICENSE) — та же, что у [BSL LS](https://github.com/1c-syntax/bsl-language-server).
