@@ -145,7 +145,7 @@ mvn -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector generate-resources   
 
 * **Ярус 0 — сборка:** `bash compile.sh` → BUILD SUCCESS, свежий квалификатор в имени p2-zip.
 * **Ярус 1 — юнит-тесты:** планируется; чистая логика — регионы подавления, маппинг CamelCase↔dash-case.
-* **Ярус 2 — живая установка:** `bash scripts/deploy-edt.sh` в EDT 2025.2, замечание `[BSL LS] …` в панели `Проблемы конфигурации`.
+* **Ярус 2 — живая установка:** `bash scripts/deploy-edt.sh` в EDT 2025.2, замечание `[BSL LS] …` в панели `Ошибки конфигурации`.
 * **Ярус 3 — e2e в CI:** план; headless EDT через `p2 director`.
 
 Перед словами «готово» и коммитом — чек-лист в `.claude/skills/bslls-ready-to-deploy/SKILL.md`.
