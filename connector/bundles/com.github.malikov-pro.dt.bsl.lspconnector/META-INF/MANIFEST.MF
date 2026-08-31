@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Connector BSL LS
 Bundle-SymbolicName: com.github.malikov-pro.dt.bsl.lspconnector;singleton:=true
-Bundle-Version: 0.4.0.qualifier
+Bundle-Version: 0.5.0.qualifier
 Bundle-Activator: com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin
 Require-Bundle: org.eclipse.core.runtime,
  com._1c.g5.v8.dt.bsl,

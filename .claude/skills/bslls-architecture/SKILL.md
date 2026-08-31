@@ -26,7 +26,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 
 1. **ICheck-канал** — для каждого известного кода из каталога публикуется
    отдельная проверка EDT (`BslLsDiagnosticCheck`); замечания видны в панели
-   `Проблемы конфигурации`, работают «Подавить»/«Открыть проверку».
+   `Ошибки конфигурации`, работают «Подавить»/«Открыть проверку».
 2. **Xtext-канал** — `BSLValidator` (`IExternalBslValidator`) гоняет модуль через
    LS при сохранении/«Проверить».
 
@@ -39,7 +39,7 @@ description: Карта бандла bslls-connector-for-edt — пакеты, �
 ```
 редактор/сохранение → BSLValidator ─┐
                                     ├→ LSService (процесс LS: native zip / jar)
-plugin.xml <check> ×~187 ─→ BslLsDiagnosticCheck ─→ панель «Проблемы конфигурации»
+plugin.xml <check> ×~187 ─→ BslLsDiagnosticCheck ─→ панель «Ошибки конфигурации»
         ↑ generate-ls-checks.py ← third_party/v8std
 «Подавить» в EDT → //@skip-check (остаётся) → listener/LsSkipCheckRewriter → + регионы // BSLLS:Код-off/on вокруг ошибки
 ```

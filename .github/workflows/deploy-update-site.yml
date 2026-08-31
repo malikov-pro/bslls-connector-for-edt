@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          # событие release чекаутит default-ветку — собираем именно тег релиза
+          ref: ${{ github.event.release.tag_name || github.ref }}
 
       - name: Установка JDK
         uses: actions/setup-java@v4
@@ -60,10 +62,16 @@ jobs:
 
       - name: Формирование сайта
         run: |
+          REPO=connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository
+          # p2 в корень Pages → короткий URL установки
+          mkdir -p _site
+          cp -r "$REPO"/. _site/
+          # копия на старом длинном пути: у уже установленных EDT он прописан
+          # в «Доступных сайтах обновления», HTML-редирект p2 не понимает
           SITE=_site/update/bslls-connector-for-edt/latest
           mkdir -p "$SITE"
-          cp -r connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/repository/* "$SITE/"
-          QUALIFIER=$(basename "$(ls "$SITE"/plugins/com.github.malikov-pro*dt.bsl.lspconnector_*.jar | head -n 1)" .jar)
+          cp -r "$REPO"/. "$SITE/"
+          QUALIFIER=$(basename "$(ls _site/plugins/com.github.malikov-pro*dt.bsl.lspconnector_*.jar | head -n 1)" .jar)
           cat > _site/index.html <<EOF
           <!DOCTYPE html>
           <html lang="ru">
@@ -72,7 +80,7 @@ jobs:
             <h1>BSL LS connector for EDT</h1>
             <p>Собранный квалификатор: <strong>${QUALIFIER#*lspconnector_}</strong></p>
             <p>URL для установки (Справка → Установить новое ПО):</p>
-            <pre>https://malikov-pro.github.io/bslls-connector-for-edt/update/bslls-connector-for-edt/latest/</pre>
+            <pre>https://malikov-pro.github.io/bslls-connector-for-edt/</pre>
             <p><a href="https://github.com/malikov-pro/bslls-connector-for-edt">Репозиторий</a></p>
           </body>
           </html>
