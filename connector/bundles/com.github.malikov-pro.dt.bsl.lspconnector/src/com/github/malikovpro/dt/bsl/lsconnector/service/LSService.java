@@ -286,6 +286,9 @@ public class LSService {
 	    try {
 		future.get();
 		return true;
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+		return false;
 	    } catch (Exception e) {
 		return false; // initialize не удался (таймаут/отказ)
 	    }
