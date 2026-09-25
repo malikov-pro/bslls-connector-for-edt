@@ -16,7 +16,7 @@
   <name>Target Definitions</name>
 
   <modules>
-    <module>default</module>
     <module>edt-2026.1</module>
+    <module>edt-2026.2</module>
   </modules>
 </project>

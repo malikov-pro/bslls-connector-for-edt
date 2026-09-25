@@ -79,10 +79,10 @@ https://malikov-pro.github.io/bslls-connector-for-edt/
 В PDE-workspace:
 
 1. Вид **Project Explorer** (не Package Explorer).
-2. Проект `default` (в `connector/targets/default/`) → файл `default.target` (EDT 2025.2 + Eclipse 2025-12). Для 2026.1 — `connector/targets/edt-2026.1/edt-2026.1.target`.
+2. Проект `edt-2026.1` (в `connector/targets/edt-2026.1/`) → файл `edt-2026.1.target` (EDT 2026.1 + Eclipse 2025-12). Для пре-релиза 2026.2 — `connector/targets/edt-2026.2/edt-2026.2.target`.
 3. Либо **Окно → Параметры → Plug-in Development → Target Platform** → **Add** → **Workspace**.
 
-Target Editor этой PDE не открывает `<location type="Maven">` (utils). Для компиляции в IDE используйте локальный таргет `connector/targets/local-edt-2025.2.target` (p2-локации + стабильный каталог `connector/targets/local-p2/`, который обновляет `compile.sh`) и «Set as Active Target Platform».
+Target Editor этой PDE не открывает `<location type="Maven">` (utils). Для компиляции в IDE используйте локальный таргет `connector/targets/local-edt-2026.1.target` (p2-локации + стабильный каталог `connector/targets/local-p2/`, который обновляет `compile.sh`) и «Set as Active Target Platform».
 
 ## Локальная сборка
 
@@ -114,13 +114,18 @@ cd connector
 mvn verify -Dtycho.localArtifacts=ignore
 ```
 
-По умолчанию сборка идёт против EDT **2025.2**. Для EDT **2026.1**:
+По умолчанию сборка идёт против EDT **2026.1**. Для пре-релиза EDT **2026.2**:
 
 ```bash
-mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.1
+mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.2
 ```
 
-Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. 2025.2 берёт LSP4J 0.23.1, 2026.1 — LSP4J 1.0.0.
+Тулчейн профиля `edt-2026.2`: **Tycho 5.0.4 + JavaSE-25** — нужен JDK 21+ на запуске
+(в CI — temurin 25; `com._1c.g5.ides.monitoring` из платформы 2026.2 требует
+`JavaSE 25`, а ECJ компилирует корректно только на JDK, не на JRE). Базовый
+2026.1 остаётся на Tycho 4.0.5 + JavaSE-17.
+
+Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. Обе платформы используют LSP4J **0.24.0** — та же версия, что поставляется в рантайме EDT (проверено по `~/.p2/pool`); API `Diagnostic.getMessage()` возвращает `String`. LSP4J 1.0.0 в EDT не входит — не подключать.
 
 Результат сборки — p2-репозиторий в `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/`.
 Ставьте этот репозиторий в ту EDT, под которую собирали.
@@ -148,7 +153,7 @@ mvn -pl bundles/com.github.malikov-pro.dt.bsl.lspconnector generate-resources   
 
 * **Ярус 0 — сборка:** `bash compile.sh` → BUILD SUCCESS, свежий квалификатор в имени p2-zip.
 * **Ярус 1 — юнит-тесты:** планируется; чистая логика — регионы подавления, маппинг CamelCase↔dash-case.
-* **Ярус 2 — живая установка:** `bash scripts/deploy-edt.sh` в EDT 2025.2, замечание `[BSL LS] …` в панели `Ошибки конфигурации`.
+* **Ярус 2 — живая установка:** `bash scripts/deploy-edt.sh` в EDT 2026.1, замечание `[BSL LS] …` в панели `Ошибки конфигурации`.
 * **Ярус 3 — e2e в CI:** план; headless EDT через `p2 director`.
 
 Перед словами «готово» и коммитом — чек-лист в `.claude/skills/bslls-ready-to-deploy/SKILL.md`.

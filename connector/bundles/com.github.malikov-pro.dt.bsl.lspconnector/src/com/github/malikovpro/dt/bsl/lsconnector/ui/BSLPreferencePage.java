@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
@@ -39,15 +40,21 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String PATH_TO_JAVA = "PATH_TO_JAVA";
     public static final String JAVA_OPTS = "JAVA_OPTS";
     public static final String DEBUG = "DEBUG";
+    public static final String ENABLED = "ENABLED";
+    public static final String INIT_TIMEOUT_SECONDS = "INIT_TIMEOUT_SECONDS";
+    /** Таймаут initialize по умолчанию, с. */
+    public static final int DEFAULT_INIT_TIMEOUT_SECONDS = 60;
 
     private Button nativeRadio;
     private Button jarRadio;
+    private Button enabledButton;
     private Composite jarComposite;
     private Composite cacheComposite;
     private Text javaCommandText;
     private Text javaOptsText;
     private Label javaStateLabel;
     private Label javaHintLabel;
+    private Spinner timeoutSpinner;
     private Label statusLabel;
     private Composite releaseRow;
     private Combo releaseCombo;
@@ -76,6 +83,16 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	var root = new Composite(parent, SWT.NONE);
 	root.setLayout(new GridLayout(1, false));
 	root.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+	enabledButton = new Button(root, SWT.CHECK);
+	enabledButton.setText("Включить плагин");
+	var enabledHint = new Label(root, SWT.WRAP);
+	enabledHint.setText("Снимите флажок, чтобы полностью отключить проверки BSL LS:"
+			+ " процесс не запускается, замечания не создаются."
+			+ " Изменение применяется по «Применить»/«OK».");
+	var enabledHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+	enabledHintData.widthHint = 420;
+	enabledHint.setLayoutData(enabledHintData);
 
 	var modeGroup = new Group(root, SWT.NONE);
 	modeGroup.setText("Режим запуска");
@@ -180,9 +197,29 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	    @Override
 	    public void widgetSelected(SelectionEvent e) {
 		replaceRequested = false;
+		// Явная проверка снимает защёлку неудачного старта: попытки поднять LS возобновляются.
+		BSLPlugin.getPlugin().getLsService().resetStartupFailure();
 		refreshStatus();
 	    }
 	});
+
+	var timeoutGroup = new Group(root, SWT.NONE);
+	timeoutGroup.setText("Таймауты");
+	timeoutGroup.setLayout(new GridLayout(3, false));
+	timeoutGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+	createLabel(timeoutGroup, "initialize, с:");
+	timeoutSpinner = new Spinner(timeoutGroup, SWT.BORDER);
+	timeoutSpinner.setMinimum(5);
+	timeoutSpinner.setMaximum(3600);
+	timeoutSpinner.setIncrement(5);
+	var timeoutHint = new Label(timeoutGroup, SWT.WRAP);
+	timeoutHint.setText("Сколько секунд ждать ответа BSL LS на запрос initialize при запуске."
+			+ " По умолчанию 60 с; крупным конфигурациям (~25 000 модулей) может"
+			+ " понадобиться больше — ставьте запас, например 120–300 с.");
+	var timeoutHintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
+	timeoutHintData.widthHint = 420;
+	timeoutHint.setLayoutData(timeoutHintData);
 
 	var debugGroup = new Group(root, SWT.NONE);
 	debugGroup.setText("Отладка");
@@ -191,8 +228,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 
 	debugButton = new Button(debugGroup, SWT.CHECK);
 	debugButton.setText("Вести отладочный журнал");
-	var debugHint = createLabel(debugGroup,
-		"Для обычной работы включать не нужно. Отладочные сообщения плагина (команда запуска BSL LS, запуск LSP)"
+	var debugHint = new Label(debugGroup, SWT.WRAP);
+	debugHint.setText("Для обычной работы включать не нужно. Отладочные сообщения плагина (команда запуска BSL LS, запуск LSP)"
 			+ " пишутся в «Журнал ошибок» и в файл .metadata/.log воркспейса. Ошибки и предупреждения"
 			+ " попадают в журнал всегда. stderr процесса BSL LS: ~/.bsl-connector-for-edt/logs/.");
 	var debugHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
@@ -223,10 +260,12 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 
     @Override
     protected void performDefaults() {
+	enabledButton.setSelection(true);
 	nativeRadio.setSelection(false);
 	jarRadio.setSelection(true);
 	javaCommandText.setText("java");
 	javaOptsText.setText("");
+	timeoutSpinner.setSelection(DEFAULT_INIT_TIMEOUT_SECONDS);
 	debugButton.setSelection(false);
 	replaceRequested = false;
 	updateVisibility();
@@ -254,18 +293,35 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private void loadValues() {
 	var store = getPreferenceStore();
 	var mode = LaunchMode.from(store.getString(LAUNCH_MODE));
+	enabledButton.setSelection(store.getBoolean(ENABLED));
 	nativeRadio.setSelection(mode == LaunchMode.NATIVE);
 	jarRadio.setSelection(mode == LaunchMode.JAR);
 	javaCommandText.setText(store.getString(PATH_TO_JAVA));
 	javaOptsText.setText(store.getString(JAVA_OPTS));
+	timeoutSpinner.setSelection(initTimeoutFromStore());
 	debugButton.setSelection(store.getBoolean(DEBUG));
+    }
+
+    /** Читает таймаут initialize из хранилища; мусор и нуль/отрицательные дают умолчание. */
+    private int initTimeoutFromStore() {
+	try {
+	    var parsed = Integer.parseInt(getPreferenceStore().getString(INIT_TIMEOUT_SECONDS).trim());
+	    if (parsed > 0) {
+		return Math.min(Math.max(parsed, timeoutSpinner.getMinimum()), timeoutSpinner.getMaximum());
+	    }
+	} catch (NumberFormatException e) {
+	    // не число — используем умолчание
+	}
+	return DEFAULT_INIT_TIMEOUT_SECONDS;
     }
 
     private boolean savePreferences() {
 	var store = getPreferenceStore();
+	store.setValue(ENABLED, enabledButton.getSelection());
 	store.setValue(LAUNCH_MODE, selectedMode().getId());
 	store.setValue(PATH_TO_JAVA, javaCommandText.getText().trim());
 	store.setValue(JAVA_OPTS, javaOptsText.getText().trim());
+	store.setValue(INIT_TIMEOUT_SECONDS, String.valueOf(timeoutSpinner.getSelection()));
 	store.setValue(DEBUG, debugButton.getSelection());
 	return true;
     }
