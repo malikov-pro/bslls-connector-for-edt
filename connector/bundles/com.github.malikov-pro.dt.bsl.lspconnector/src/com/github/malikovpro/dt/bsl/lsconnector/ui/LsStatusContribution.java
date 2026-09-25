@@ -29,6 +29,7 @@ import com.github.malikovpro.dt.bsl.lsconnector.service.LsStatusService;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LaunchMode;
 
 public class LsStatusContribution extends WorkbenchWindowControlContribution {
+    private static final String STATUS_TEXT = "BSL LS";
     private static final int CANVAS_WIDTH_HINT = 160;
     private static final int TEXT_X = 18;
     private static final int CIRCLE_SIZE = 12;
@@ -43,7 +44,7 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
     private Image currentImage;
     private Menu popupMenu;
     private MenuItem updateItem;
-    private String statusText = "BSL LS";
+    private String statusText = STATUS_TEXT;
     private boolean blinkOn = true;
     private boolean disposed;
     private Runnable modelListener;
@@ -156,17 +157,17 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	} else {
 	    currentImage = greyImage;
 	}
-	statusText = buildLabel(service, running, update);
+	statusText = buildLabel(service, update);
 	canvas.setToolTipText(buildTooltip(service, running, busy));
 	canvas.redraw();
     }
 
-    private String buildLabel(LsStatusService service, boolean running, boolean update) {
+    private String buildLabel(LsStatusService service, boolean update) {
 	var suffix = update ? " \u2191" : "";
 	if (service == null) {
-	    return "BSL LS" + suffix;
+	    return STATUS_TEXT + suffix;
 	}
-	return (running ? "BSL LS" : "BSL LS") + suffix;
+	return STATUS_TEXT + suffix;
     }
 
     private String buildTooltip(LsStatusService service, boolean running, boolean busy) {
@@ -284,7 +285,7 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	    gc.drawImage(currentImage, 0, centerY - imageBounds.height / 2);
 	}
 	gc.setForeground(canvas.getForeground());
-	var text = statusText == null ? "BSL LS" : statusText;
+	var text = statusText == null ? STATUS_TEXT : statusText;
 	var room = bounds.width - TEXT_X - 4;
 	while (text.length() > 3 && gc.textExtent(text).x > room) {
 	    text = text.substring(0, text.length() - 2) + "\u2026";

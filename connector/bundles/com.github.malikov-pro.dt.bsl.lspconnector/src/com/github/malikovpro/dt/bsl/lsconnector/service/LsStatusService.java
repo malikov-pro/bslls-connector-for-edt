@@ -42,11 +42,10 @@ public class LsStatusService {
     }
 
     public void endBusy() {
-	if (busy.updateAndGet(value -> value > 0 ? value - 1 : 0) == 0) {
-	    notifyListeners();
-	} else {
-	    notifyListeners();
-	}
+	// Счётчик уменьшаем всегда, слушателей уведомляем при любом исходе:
+	// прежние ветки if/else делали одно и то же (java:S3923).
+	busy.updateAndGet(value -> value > 0 ? value - 1 : 0);
+	notifyListeners();
     }
 
     public boolean isBusy() {
@@ -185,6 +184,9 @@ public class LsStatusService {
 	    var store = plugin.getPreferenceStore();
 	    return LsVersionProbe.languageServerVersion(artifact.get(), mode == LaunchMode.JAR,
 		    store.getString(BSLPreferencePage.PATH_TO_JAVA), store.getString(BSLPreferencePage.JAVA_OPTS));
+	} catch (InterruptedException e) {
+	    Thread.currentThread().interrupt();
+	    return "";
 	} catch (Exception e) {
 	    return "";
 	}

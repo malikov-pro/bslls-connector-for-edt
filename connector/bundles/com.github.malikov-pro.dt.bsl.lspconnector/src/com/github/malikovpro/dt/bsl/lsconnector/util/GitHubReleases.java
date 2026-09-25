@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public final class GitHubReleases {
+    /** Имя поля релиза в JSON GitHub API (встречается в parse() трижды). */
+    private static final String TAG_NAME_FIELD = "\"tag_name\"";
     public static final String API_URL = "https://api.github.com/repos/1c-syntax/bsl-language-server/releases?per_page=5";
     public static final String USER_AGENT = "bslls-connector-for-edt";
     private static final Pattern STRING_VALUE = Pattern.compile("\"([^\"]+)\"");
@@ -49,14 +51,14 @@ public final class GitHubReleases {
 	List<GitHubRelease> releases = new ArrayList<>();
 	var idx = 0;
 	while (releases.size() < 5) {
-	    var tagPos = json.indexOf("\"tag_name\"", idx);
+	    var tagPos = json.indexOf(TAG_NAME_FIELD, idx);
 	    if (tagPos < 0) {
 		break;
 	    }
-	    var nextTag = json.indexOf("\"tag_name\"", tagPos + 10);
+	    var nextTag = json.indexOf(TAG_NAME_FIELD, tagPos + TAG_NAME_FIELD.length());
 	    var end = nextTag < 0 ? json.length() : nextTag;
 	    var block = json.substring(tagPos, end);
-	    var tag = extractStringAfter(block, "\"tag_name\"");
+	    var tag = extractStringAfter(block, TAG_NAME_FIELD);
 	    if (tag != null && !tag.isBlank()) {
 		releases.add(new GitHubRelease(tag,
 			findAssetUrl(block, "-exec.jar"),
