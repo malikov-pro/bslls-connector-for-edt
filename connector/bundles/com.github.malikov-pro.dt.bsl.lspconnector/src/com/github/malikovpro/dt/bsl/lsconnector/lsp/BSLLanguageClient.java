@@ -27,7 +27,10 @@ public class BSLLanguageClient implements LanguageClient {
 
     @Override
     public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-	return null;
+	// Headless-клиент: отвечаем сразу, чтобы сервер не ждал пользователя без таймаума.
+	// null внутри future = «никакое действие не выбрано»; при sendErrors=ask это
+	// трактуется как отказ от отправки и разблокирует поток диагностики (issue #14).
+	return CompletableFuture.completedFuture(new MessageActionItem());
     }
 
     @Override
