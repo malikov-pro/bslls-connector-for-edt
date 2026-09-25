@@ -3,5 +3,6 @@
     "diagnostics": {
         "computeTrigger": "onSave"
     },
+    "sendErrors": "never",
     "configurationRoot": "src"
 }

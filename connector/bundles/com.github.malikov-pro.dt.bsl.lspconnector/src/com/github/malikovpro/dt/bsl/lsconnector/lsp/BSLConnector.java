@@ -50,6 +50,18 @@ public class BSLConnector {
     private final java.util.concurrent.ConcurrentHashMap<String, Integer> documentVersions =
 	    new java.util.concurrent.ConcurrentHashMap<>();
 
+    /**
+     * Общий пул LSP-уведомлений: раньше пул создавался на каждый вызов, и
+     * зависшие на записи в пайп потоки (issue #14) копились как pool-Nxx.
+     * Потоки daemon — не мешают завершению EDT; простаивающие умирают.
+     */
+    private final java.util.concurrent.ExecutorService rpcExecutor =
+	    Executors.newCachedThreadPool(runnable -> {
+		var thread = new Thread(runnable, "bsl-ls-rpc");
+		thread.setDaemon(true);
+		return thread;
+	    });
+
     private BSLLanguageClient client;
     private LanguageServer server;
     private InputStream in;
@@ -171,9 +183,10 @@ public class BSLConnector {
     }
     
     public void runFutureTask(Runnable runnable, int timeoutInSeconds) {
-	var threadpool = Executors.newCachedThreadPool();
+	// Общий daemon-пул (поле rpcExecutor): без shutdown() на каждый вызов —
+	// пул живёт вместе с коннектором, простаивающие потоки умирают сами.
 	try {
-	    var futureTask = threadpool.submit(runnable);
+	    var futureTask = rpcExecutor.submit(runnable);
 	    try {
 		futureTask.get(timeoutInSeconds, TimeUnit.SECONDS);
 	    } catch (InterruptedException e) {
@@ -183,8 +196,9 @@ public class BSLConnector {
 		BSLPlugin.logError("Ошибка LSP-запроса", e);
 		futureTask.cancel(true);
 	    }
-	} finally {
-	    threadpool.shutdown();
+	} catch (java.util.concurrent.RejectedExecutionException e) {
+	    // Пул уже остановлен (коннектор закрывается) — уведомление доставить некому.
+	    BSLPlugin.logWarning("LSP-уведомление отклонено: пул остановлен");
 	}
     }
 
