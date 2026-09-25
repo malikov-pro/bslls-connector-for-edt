@@ -120,6 +120,11 @@ mvn verify -Dtycho.localArtifacts=ignore
 mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.2
 ```
 
+Тулчейн профиля `edt-2026.2`: **Tycho 5.0.4 + JavaSE-25** — нужен JDK 21+ на запуске
+(в CI — temurin 25; `com._1c.g5.ides.monitoring` из платформы 2026.2 требует
+`JavaSE 25`, а ECJ компилирует корректно только на JDK, не на JRE). Базовый
+2026.1 остаётся на Tycho 4.0.5 + JavaSE-17.
+
 Исходник один: версии пакетов 1С в `MANIFEST.MF` не зафиксированы. Обе платформы используют LSP4J **0.24.0** — та же версия, что поставляется в рантайме EDT (проверено по `~/.p2/pool`); API `Diagnostic.getMessage()` возвращает `String`. LSP4J 1.0.0 в EDT не входит — не подключать.
 
 Результат сборки — p2-репозиторий в `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository/target/`.

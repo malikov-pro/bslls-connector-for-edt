@@ -60,7 +60,15 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
 
-      # Пре-релизная платформа: тот же исходник должен собираться и против EDT 2026.2
+      # Пре-релизная платформа: тот же исходник должен собираться и против EDT 2026.2.
+      # Tycho 5.0.4 (профиль edt-2026.2) требует JDK 21+, платформа 2026.2 — JavaSE 25.
+      - name: Установка JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          architecture: x64
+
       - name: Сборка (EDT 2026.2)
         working-directory: connector
         run: mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.2

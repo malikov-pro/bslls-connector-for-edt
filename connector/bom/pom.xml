@@ -35,6 +35,9 @@
 
     <!-- default = EDT 2026.1 (основная); пре-релиз EDT 2026.2 — через -Pedt-2026.2 -->
     <edt.target.artifact>edt-2026.1</edt.target.artifact>
+    <!-- 2026.1 собирается Tycho 4 против JavaSE-17; 2026.2 требует Tycho 5 + JavaSE-25
+         (com._1c.g5.ides.monitoring в платформе 2026.2 требует JavaSE 25) -->
+    <tycho.ee>JavaSE-17</tycho.ee>
   </properties>
 
   <profiles>
@@ -42,6 +45,8 @@
       <id>edt-2026.2</id>
       <properties>
         <edt.target.artifact>edt-2026.2</edt.target.artifact>
+        <tycho.version>5.0.4</tycho.version>
+        <tycho.ee>JavaSE-25</tycho.ee>
       </properties>
     </profile>
   </profiles>
@@ -54,7 +59,7 @@
           <artifactId>target-platform-configuration</artifactId>
           <version>${tycho.version}</version>
           <configuration>
-            <executionEnvironment>JavaSE-17</executionEnvironment>
+            <executionEnvironment>${tycho.ee}</executionEnvironment>
             <target>
               <artifact>
                 <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>

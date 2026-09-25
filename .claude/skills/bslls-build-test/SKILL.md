@@ -25,8 +25,8 @@ description: Как собрать плагин bslls-connector-for-edt (Maven/T
 Единственный канонический вход — скрипт в корне:
 
 ```bash
-bash compile.sh                                  # EDT 2026.1 (по умолчанию)
-bash compile.sh --profile edt-2026.2             # пре-релиз EDT 2026.2
+bash compile.sh                                  # EDT 2026.1 (по умолчанию, JDK 17+)
+bash compile.sh --profile edt-2026.2             # пре-релиз EDT 2026.2 (Tycho 5.0.4 + JavaSE-25 → JDK 21+)
 ```
 
 Скрипт сам: подхватывает `connector/bom/edt-credentials.env`, запускает сборку
