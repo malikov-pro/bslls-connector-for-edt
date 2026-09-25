@@ -201,8 +201,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	timeoutSpinner.setMinimum(5);
 	timeoutSpinner.setMaximum(3600);
 	timeoutSpinner.setIncrement(5);
-	var timeoutHint = createLabel(timeoutGroup,
-		"Сколько секунд ждать ответа BSL LS на запрос initialize при запуске."
+	var timeoutHint = new Label(timeoutGroup, SWT.WRAP);
+	timeoutHint.setText("Сколько секунд ждать ответа BSL LS на запрос initialize при запуске."
 			+ " Крупным конфигурациям (~25 000 модулей) стандартных 15 с не хватает —"
 			+ " поставьте запас, например 120 с.");
 	var timeoutHintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
@@ -216,8 +216,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 
 	debugButton = new Button(debugGroup, SWT.CHECK);
 	debugButton.setText("Вести отладочный журнал");
-	var debugHint = createLabel(debugGroup,
-		"Для обычной работы включать не нужно. Отладочные сообщения плагина (команда запуска BSL LS, запуск LSP)"
+	var debugHint = new Label(debugGroup, SWT.WRAP);
+	debugHint.setText("Для обычной работы включать не нужно. Отладочные сообщения плагина (команда запуска BSL LS, запуск LSP)"
 			+ " пишутся в «Журнал ошибок» и в файл .metadata/.log воркспейса. Ошибки и предупреждения"
 			+ " попадают в журнал всегда. stderr процесса BSL LS: ~/.bsl-connector-for-edt/logs/.");
 	var debugHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
