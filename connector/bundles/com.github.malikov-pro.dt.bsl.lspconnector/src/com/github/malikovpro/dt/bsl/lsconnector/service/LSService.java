@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -17,6 +18,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
 import com.github.malikovpro.dt.bsl.lsconnector.check.LsIssueCleaner;
+import com.github.malikovpro.dt.bsl.lsconnector.check.LsRevalidation;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLLanguageClient;
 import com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage;
@@ -34,6 +36,10 @@ public class LSService {
     private volatile boolean startupFailed;
     /** Замечания уже сняты в текущий «выключенный» период — очистка не повторяется на каждом модуле. */
     private volatile boolean clearedWhileDisabled;
+    /** Был «выключенный» период: после первого успешного старта нужна перевалидация. */
+    private volatile boolean revalidationNeeded;
+    /** Активный запрос initialize — по нему ждут готовности LS перед перевалидацией. */
+    private volatile Future<?> initializeFuture;
 
     public BSLConnector getConnector() {
 	return connector;
@@ -67,6 +73,7 @@ public class LSService {
 	// Уже опубликованные замечания снимаем — один раз за «выключенный» период
 	// (ensureStarted() зовётся на каждый модуль, повторять очистку нельзя).
 	if (!plugin.isEnabled()) {
+	    revalidationNeeded = true;
 	    if (!clearedWhileDisabled) {
 		clearedWhileDisabled = true;
 		LsIssueCleaner.clearAsync();
@@ -77,6 +84,11 @@ public class LSService {
 	connectToProcess();
 	if (isLaunched()) {
 	    windowsEventService.start();
+	    // Процесс поднялся после «выключенного» периода: перевалидация проектов.
+	    if (revalidationNeeded) {
+		revalidationNeeded = false;
+		LsRevalidation.scheduleAsync();
+	    }
 	} else {
 	    // Запоминаем отказ, иначе каждая проверка модуля заново оплатит таймаут initialize.
 	    startupFailed = true;
@@ -215,6 +227,7 @@ public class LSService {
 	connector = new BSLConnector(client, in, out);
 	connector.startInThread();
 	var future = connector.initialize();
+	initializeFuture = future;
 	var timeoutSeconds = initTimeoutSeconds();
 	try {
 	    // Ждём ответ ограниченно: зависший LS не должен блокировать вызывающий поток навсегда.
@@ -232,7 +245,7 @@ public class LSService {
 	}
     }
 
-    /** Таймаут initialize из настроек («Таймаут initialize, с»), по умолчанию 15 с. */
+    /** Таймаут initialize из настроек («Таймаут initialize, с»), по умолчанию 60 с. */
     private long initTimeoutSeconds() {
 	try {
 	    var parsed = Long.parseLong(preferenceStore
@@ -246,9 +259,44 @@ public class LSService {
 	return BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS;
     }
 
+    /**
+     * Ждёт готовности LS: появления запроса initialize после рестарта и его
+     * завершения. Нужно заданиям перевалидации: запускать проверки против ещё
+     * не инициализировавшегося LS нельзя — пустые ответы закэшируются.
+     *
+     * @return true, если LS готов принимать запросы
+     */
+    public boolean awaitInitialized() {
+	var deadline = System.currentTimeMillis()
+		+ (initTimeoutSeconds() + 60) * 1000;
+	while (System.currentTimeMillis() < deadline) {
+	    if (!isLaunched()) {
+		return false; // процесс не запустился или остановлен (таймаут, выключение)
+	    }
+	    var future = initializeFuture;
+	    if (future == null) {
+		try {
+		    Thread.sleep(500);
+		} catch (InterruptedException e) {
+		    Thread.currentThread().interrupt();
+		    return false;
+		}
+		continue; // рестарт ещё не дошёл до initialize — ждём
+	    }
+	    try {
+		future.get();
+		return true;
+	    } catch (Exception e) {
+		return false; // initialize не удался (таймаут/отказ)
+	    }
+	}
+	return false;
+    }
+
     private void clear() {
 	process = null;
 	connector = null;
+	initializeFuture = null;
     }
 
     private Optional<Path> findCachedArtifact(LaunchMode mode) {

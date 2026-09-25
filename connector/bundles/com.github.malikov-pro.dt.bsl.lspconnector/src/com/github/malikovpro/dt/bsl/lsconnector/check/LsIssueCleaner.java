@@ -58,13 +58,13 @@ public final class LsIssueCleaner {
     }
 
     /** Все идентификаторы проверок коннектора: каталог диагностик + запасная проверка. */
-    private static Set<String> checkIds() {
+    static Set<String> checkIds() {
 	var ids = new HashSet<>(LsDiagnosticCatalog.codes());
 	ids.add(BSLLsCheck.CHECK_ID);
 	return ids;
     }
 
-    private static ICheckScheduler awaitScheduler(IProgressMonitor monitor) {
+    static ICheckScheduler awaitScheduler(IProgressMonitor monitor) {
 	var waited = 0L;
 	while (!monitor.isCanceled() && waited < SERVICE_WAIT_MILLIS) {
 	    var scheduler = scheduler();

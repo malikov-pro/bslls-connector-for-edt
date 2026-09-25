@@ -43,7 +43,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String ENABLED = "ENABLED";
     public static final String INIT_TIMEOUT_SECONDS = "INIT_TIMEOUT_SECONDS";
     /** Таймаут initialize по умолчанию, с. */
-    public static final int DEFAULT_INIT_TIMEOUT_SECONDS = 15;
+    public static final int DEFAULT_INIT_TIMEOUT_SECONDS = 60;
 
     private Button nativeRadio;
     private Button jarRadio;
@@ -215,8 +215,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	timeoutSpinner.setIncrement(5);
 	var timeoutHint = new Label(timeoutGroup, SWT.WRAP);
 	timeoutHint.setText("Сколько секунд ждать ответа BSL LS на запрос initialize при запуске."
-			+ " Крупным конфигурациям (~25 000 модулей) стандартных 15 с не хватает —"
-			+ " поставьте запас, например 120 с.");
+			+ " По умолчанию 60 с; крупным конфигурациям (~25 000 модулей) может"
+			+ " понадобиться больше — ставьте запас, например 120–300 с.");
 	var timeoutHintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
 	timeoutHintData.widthHint = 420;
 	timeoutHint.setLayoutData(timeoutHintData);
