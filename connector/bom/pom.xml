@@ -33,15 +33,15 @@
     <tycho.resolver.classic>false</tycho.resolver.classic>
     <tycho.baseline.skip>true</tycho.baseline.skip>
 
-    <!-- default = EDT 2025.2; override with -Pedt-2026.1 -->
-    <edt.target.artifact>default</edt.target.artifact>
+    <!-- default = EDT 2026.1 (основная); пре-релиз EDT 2026.2 — через -Pedt-2026.2 -->
+    <edt.target.artifact>edt-2026.1</edt.target.artifact>
   </properties>
 
   <profiles>
     <profile>
-      <id>edt-2026.1</id>
+      <id>edt-2026.2</id>
       <properties>
-        <edt.target.artifact>edt-2026.1</edt.target.artifact>
+        <edt.target.artifact>edt-2026.2</edt.target.artifact>
       </properties>
     </profile>
   </profiles>

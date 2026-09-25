@@ -209,6 +209,8 @@ public class BSLPlugin extends Plugin {
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
 	preferenceStore.setDefault(BSLPreferencePage.DEBUG, false);
+	preferenceStore.setDefault(BSLPreferencePage.INIT_TIMEOUT_SECONDS,
+		String.valueOf(BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS));
     }
 
     private void prepareForStart() {

@@ -3,7 +3,7 @@
 # (без GUI «Установить новое ПО»). EDT во время установки должна быть ЗАКРЫТА.
 #
 # Использование:
-#   bash scripts/deploy-edt.sh                          # авто-поиск EDT 2025.2
+#   bash scripts/deploy-edt.sh                          # авто-поиск EDT 2026.x
 #   bash scripts/deploy-edt.sh --edt "/путь/к/1cedt"    # своя инсталляция (каталог с 1cedt)
 #   bash scripts/deploy-edt.sh --workspace "/путь/к/ws" # свой EDT-воркспейс для чистки журнала
 #

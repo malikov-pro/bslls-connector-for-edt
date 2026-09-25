@@ -24,14 +24,13 @@ import com.github.malikovpro.dt.bsl.lsconnector.util.LsCache;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LsVersionProbe;
 
 public class LSService {
-    /** Сколько ждём ответа на LSP initialize, прежде чем признать LS зависшим. */
-    private static final long INIT_TIMEOUT_SECONDS = 15;
-
     private final BSLPlugin plugin;
     private final WindowsEventService windowsEventService;
     private final ScopedPreferenceStore preferenceStore;
     private Process process;
     private BSLConnector connector;
+    /** Защёлка неудачного старта: после отказа не поднимаем LS заново на каждом модуле. */
+    private volatile boolean startupFailed;
 
     public BSLConnector getConnector() {
 	return connector;
@@ -47,6 +46,12 @@ public class LSService {
 	if (isLaunched()) {
 	    return true;
 	}
+	// После неудачного старта попытка не повторяется на каждом модуле:
+	// каждый повтор стоит таймаут initialize и строку в журнале. Повторить
+	// можно явно — «Проверить»/«Применить» в настройках или перезапуск EDT.
+	if (startupFailed) {
+	    return false;
+	}
 	start();
 	return isLaunched();
     }
@@ -59,6 +64,9 @@ public class LSService {
 	connectToProcess();
 	if (isLaunched()) {
 	    windowsEventService.start();
+	} else {
+	    // Запоминаем отказ, иначе каждая проверка модуля заново оплатит таймаут initialize.
+	    startupFailed = true;
 	}
 	plugin.getStatusService().refreshLocalVersion();
     }
@@ -85,6 +93,8 @@ public class LSService {
 	    }
 	}
 	clear();
+	// Явный stop (настройки/рестарт) снимает защёлку отказа — следующая попытка разрешена.
+	startupFailed = false;
 	plugin.getStatusService().fireChanged();
     }
 
@@ -104,6 +114,11 @@ public class LSService {
 	};
 	job.setSystem(true);
 	job.schedule();
+    }
+
+    /** Сбрасывает защёлку неудачного старта: следующая проверка модуля снова попробует поднять LS. */
+    public synchronized void resetStartupFailure() {
+	startupFailed = false;
     }
 
     public LaunchMode getLaunchMode() {
@@ -185,18 +200,35 @@ public class LSService {
 	connector = new BSLConnector(client, in, out);
 	connector.startInThread();
 	var future = connector.initialize();
+	var timeoutSeconds = initTimeoutSeconds();
 	try {
 	    // Ждём ответ ограниченно: зависший LS не должен блокировать вызывающий поток навсегда.
-	    future.get(INIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+	    future.get(timeoutSeconds, TimeUnit.SECONDS);
 	} catch (java.util.concurrent.TimeoutException e) {
-	    BSLPlugin.logWarning("BSL LS не ответил на initialize за " + INIT_TIMEOUT_SECONDS
-		    + " с. Процесс остановлен — проверьте режим запуска и дистрибутив.");
+	    BSLPlugin.logWarning("BSL LS не ответил на initialize за " + timeoutSeconds + " с. Процесс остановлен."
+		    + " Повторные попытки остановлены до «Проверить»/«Применить» в настройках или перезапуска EDT."
+		    + " Крупной конфигурации времени старта не хватает — увеличьте таймаут initialize"
+		    + " в настройках коннектора (Окно → Параметры → Коннектор BSL LS).");
 	    stop();
 	} catch (InterruptedException e) {
 	    Thread.currentThread().interrupt();
 	} catch (Exception e) {
 	    BSLPlugin.logWarning("Ошибка инициализации BSL LS: " + e.getMessage());
 	}
+    }
+
+    /** Таймаут initialize из настроек («Таймаут initialize, с»), по умолчанию 15 с. */
+    private long initTimeoutSeconds() {
+	try {
+	    var parsed = Long.parseLong(preferenceStore
+		    .getString(BSLPreferencePage.INIT_TIMEOUT_SECONDS).trim());
+	    if (parsed > 0) {
+		return parsed;
+	    }
+	} catch (NumberFormatException e) {
+	    // В настройках не число — используем умолчание.
+	}
+	return BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS;
     }
 
     private void clear() {

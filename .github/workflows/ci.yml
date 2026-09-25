@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/default/default.target') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('targets/edt-2026.1/edt-2026.1.target') }}
           restore-keys: ${{ runner.os }}-m2
 
       - name: Кеширование SonarQube
@@ -52,9 +52,18 @@ jobs:
 
       # https://edt.1c.ru/dev/ru/docs/plugins/project/build-install-publish-project/
       # XML-entity лимиты приходят из connector/.mvn/jvm.config
-      - name: Сборка
+      # Основная сборка — против EDT 2026.1 (дефолтный таргет)
+      - name: Сборка (EDT 2026.1)
         working-directory: connector
         run: mvn verify -Dtycho.localArtifacts=ignore
+        env:
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}
+
+      # Пре-релизная платформа: тот же исходник должен собираться и против EDT 2026.2
+      - name: Сборка (EDT 2026.2)
+        working-directory: connector
+        run: mvn verify -Dtycho.localArtifacts=ignore -Pedt-2026.2
         env:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_CENTRAL_TOKEN: ${{ secrets.MAVEN_CENTRAL_TOKEN }}

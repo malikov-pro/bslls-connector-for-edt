@@ -19,8 +19,9 @@ description: Финальные ворота «определение готов
      осознанно; карточки `check.descriptions/` в git не попадают.
    - Правок сгенерированного руками нет.
 
-2. **Сборка** — `bash compile.sh` → BUILD SUCCESS, zip со свежим квалификатором.
-   Для ветки 2026.1 дополнительно: `bash compile.sh --profile edt-2026.1`.
+2. **Сборка** — `bash compile.sh` → BUILD SUCCESS, zip со свежим квалификатором
+   (дефолт — EDT 2026.1). Затрагивала целевую платформу — дополнительно
+   `bash compile.sh --profile edt-2026.2`.
    Симптом-маркер: ошибки XML-entity = сборка запущена мимо `connector/.mvn/jvm.config`.
 
 3. **Контракты из CLAUDE.md** — глазами по diff'у:
