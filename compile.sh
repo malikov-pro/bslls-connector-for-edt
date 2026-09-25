@@ -6,8 +6,8 @@
 # XML-entity лимиты задавать не нужно: их подхватывает connector/.mvn/jvm.config.
 #
 # Использование:
-#   bash compile.sh                     # сборка + упаковка p2
-#   bash compile.sh --profile edt-2026.1
+#   bash compile.sh                                  # EDT 2026.1 (основная цель)
+#   bash compile.sh --profile edt-2026.2             # EDT 2026.2 (пре-релиз)
 #   bash compile.sh --java-home /usr/lib/jvm/axiomjdk-java25-pro-full-amd64 --maven-home /opt/maven
 
 set -euo pipefail
@@ -68,6 +68,10 @@ else
 fi
 
 # --- build -------------------------------------------------------------------
+case "$PROFILE" in
+    ""|edt-2026.1|edt-2026.2) ;; # допустимые значения; пусто = EDT 2026.1
+    *) die "неизвестный профиль: $PROFILE (допустимо: edt-2026.1, edt-2026.2)" ;;
+esac
 CMD=(clean verify --batch-mode -T 1C -Dtycho.localArtifacts=ignore)
 [[ -n "$PROFILE" ]] && CMD+=(-P"$PROFILE")
 
@@ -78,7 +82,7 @@ log "Запуск: mvn ${CMD[*]} (в connector/)"
 ZIP="$(ls -t "$REPO_DIR"/*.zip 2>/dev/null | head -n 1 || true)"
 [[ -n "$ZIP" ]] || die "p2-zip не найден в $REPO_DIR"
 
-# Стабильный каталог для IDE-таргета (local-edt-2025.2.target): переживает mvn clean.
+# Стабильный каталог для IDE-таргета (local-edt-2026.1.target): переживает mvn clean.
 mkdir -p "$ROOT/connector/targets/local-p2"
 rm -f "$ROOT/connector/targets/local-p2"/com.github.1c-syntax.utils_*.jar
 cp "$REPO_DIR/repository/plugins/"com.github.1c-syntax.utils_*.jar "$ROOT/connector/targets/local-p2/"
@@ -86,5 +90,5 @@ log "local-p2 обновлён: $(ls "$ROOT/connector/targets/local-p2")"
 
 log "ГОТОВО: p2-репозиторий:"
 echo "  $ZIP"
-echo "  профиль: ${PROFILE:-по умолчанию (EDT 2025.2)}"
+echo "  профиль: ${PROFILE:-edt-2026.1 (по умолчанию)}"
 echo "Установка: Справка → Установить новое ПО → Добавить → Архив → этот zip (флажок «Обращаться во время инсталляции ко всем сайтам…» СНЯТЬ)."

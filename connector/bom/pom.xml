@@ -6,7 +6,7 @@
 
   <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>
   <artifactId>bom</artifactId>
-  <version>0.5.0-SNAPSHOT</version>
+  <version>0.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>BOM</name>
@@ -33,15 +33,20 @@
     <tycho.resolver.classic>false</tycho.resolver.classic>
     <tycho.baseline.skip>true</tycho.baseline.skip>
 
-    <!-- default = EDT 2025.2; override with -Pedt-2026.1 -->
-    <edt.target.artifact>default</edt.target.artifact>
+    <!-- default = EDT 2026.1 (основная); пре-релиз EDT 2026.2 — через -Pedt-2026.2 -->
+    <edt.target.artifact>edt-2026.1</edt.target.artifact>
+    <!-- 2026.1 собирается Tycho 4 против JavaSE-17; 2026.2 требует Tycho 5 + JavaSE-25
+         (com._1c.g5.ides.monitoring в платформе 2026.2 требует JavaSE 25) -->
+    <tycho.ee>JavaSE-17</tycho.ee>
   </properties>
 
   <profiles>
     <profile>
-      <id>edt-2026.1</id>
+      <id>edt-2026.2</id>
       <properties>
-        <edt.target.artifact>edt-2026.1</edt.target.artifact>
+        <edt.target.artifact>edt-2026.2</edt.target.artifact>
+        <tycho.version>5.0.4</tycho.version>
+        <tycho.ee>JavaSE-25</tycho.ee>
       </properties>
     </profile>
   </profiles>
@@ -54,7 +59,7 @@
           <artifactId>target-platform-configuration</artifactId>
           <version>${tycho.version}</version>
           <configuration>
-            <executionEnvironment>JavaSE-17</executionEnvironment>
+            <executionEnvironment>${tycho.ee}</executionEnvironment>
             <target>
               <artifact>
                 <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>

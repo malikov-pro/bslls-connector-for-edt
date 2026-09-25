@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.github.malikov-pro.dt.bsl.lsconnector</groupId>
     <artifactId>parent</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>0.6.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>targets</artifactId>
@@ -16,7 +16,7 @@
   <name>Target Definitions</name>
 
   <modules>
-    <module>default</module>
     <module>edt-2026.1</module>
+    <module>edt-2026.2</module>
   </modules>
 </project>

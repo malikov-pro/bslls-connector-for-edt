@@ -116,12 +116,26 @@ public class BSLPlugin extends Plugin {
 	log(createWarningStatus(message, throwable));
     }
 
+    /** Информационная запись в журнал ошибок — для редких одноразовых событий (очистка, перевалидация). */
+    public static void logInfo(String message) {
+	log(new Status(IStatus.INFO, PLUGIN_ID, 0, message, null));
+    }
+
     public static boolean isDebugEnabled() {
 	var instance = plugin;
 	if (instance == null || instance.preferenceStore == null) {
 	    return false;
 	}
 	return instance.preferenceStore.getBoolean(BSLPreferencePage.DEBUG);
+    }
+
+    /**
+     * Включён ли плагин (настройка «Включить плагин»). Пока хранилище настроек
+     * не готово, считаем включённым — это поведение по умолчанию.
+     */
+    public boolean isEnabled() {
+	var store = preferenceStore;
+	return store == null || store.getBoolean(BSLPreferencePage.ENABLED);
     }
 
     /** Отладочное сообщение: в журнал попадает только при включённой настройке «Отладка». */
@@ -209,6 +223,9 @@ public class BSLPlugin extends Plugin {
 	preferenceStore.setDefault(BSLPreferencePage.PATH_TO_JAVA, "java");
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
 	preferenceStore.setDefault(BSLPreferencePage.DEBUG, false);
+	preferenceStore.setDefault(BSLPreferencePage.ENABLED, true);
+	preferenceStore.setDefault(BSLPreferencePage.INIT_TIMEOUT_SECONDS,
+		String.valueOf(BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS));
     }
 
     private void prepareForStart() {

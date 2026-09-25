@@ -1,6 +1,6 @@
 ---
 name: bslls-build-test
-description: Как собрать плагин bslls-connector-for-edt (Maven/Tycho) локально через compile.sh, получить p2-zip и установить его в EDT 2025.2. Использовать при сборке, проверке изменений перед коммитом или проблемах установки p2.
+description: Как собрать плагин bslls-connector-for-edt (Maven/Tycho) локально через compile.sh, получить p2-zip и установить его в EDT 2026.1/2026.2. Использовать при сборке, проверке изменений перед коммитом или проблемах установки p2.
 ---
 
 # Сборка и установка
@@ -15,8 +15,8 @@ description: Как собрать плагин bslls-connector-for-edt (Maven/T
 | `connector/bundles/com.github.malikov-pro.dt.bsl.lspconnector` | сам плагин (один бандл) |
 | `connector/features/com.github.malikov-pro.dt.bsl.lsconnector` | фича |
 | `connector/repositories/com.github.malikov-pro.dt.bsl.lsconnector.repository` | p2-репозиторий (результат сборки) |
-| `connector/targets/default/default.target` | целевая платформа EDT 2025.2 + Eclipse 2025-12 |
-| `connector/targets/edt-2026.1/edt-2026.1.target` | платформа EDT 2026.1 (профиль `edt-2026.1`) |
+| `connector/targets/edt-2026.1/edt-2026.1.target` | целевая платформа EDT 2026.1 (по умолчанию) + Eclipse 2025-12 |
+| `connector/targets/edt-2026.2/edt-2026.2.target` | целевая платформа EDT 2026.2 (пре-релиз, профиль `edt-2026.2`) |
 
 Внимание к именам: бандл — **lsp**connector, фича/репозиторий — **ls**connector.
 
@@ -25,8 +25,8 @@ description: Как собрать плагин bslls-connector-for-edt (Maven/T
 Единственный канонический вход — скрипт в корне:
 
 ```bash
-bash compile.sh                     # mvn clean verify -T 1C + путь к zip
-bash compile.sh --profile edt-2026.1
+bash compile.sh                                  # EDT 2026.1 (по умолчанию, JDK 17+)
+bash compile.sh --profile edt-2026.2             # пре-релиз EDT 2026.2 (Tycho 5.0.4 + JavaSE-25 → JDK 21+)
 ```
 
 Скрипт сам: подхватывает `connector/bom/edt-credentials.env`, запускает сборку

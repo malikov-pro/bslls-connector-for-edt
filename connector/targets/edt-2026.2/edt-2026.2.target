@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.8"?>
-<target name="1C:EDT 2026.1 / Eclipse 2025-12" sequenceNumber="4">
+<target name="1C:EDT 2026.2 / Eclipse 2025-12" sequenceNumber="1">
 <locations>
 
 <!-- EDT -->
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<repository id="dt_repository" location="https://edt.1c.ru/downloads/releases/ruby/2026.1/"/>
+<repository id="dt_repository" location="https://edt.1c.ru/downloads/releases/ruby/2026.2/"/>
 <unit id="com._1c.g5.v8.dt.rcp" version="0.0.0"/>
 <unit id="com._1c.g5.v8.dt.feature.feature.group" version="0.0.0"/>
 <unit id="com._1c.g5.v8.dt.thirdparty.feature.group" version="0.0.0"/>
@@ -16,6 +16,23 @@
 <unit id="org.eclipse.sdk.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.pde.feature.group" version="0.0.0"/>
+<unit id="jakarta.xml.bind-api" version="2.3.3"/>
+<unit id="javax.activation" version="0.0.0"/>
+<!-- org.eclipse.osgi.services (тянется EGit через dt.common.git) требует эти
+     пакеты как БАНДЛЫ; платформа 2025-12 больше не складывает их внутрь
+     org.eclipse.osgi.services — как в таргете EDT-MCP -->
+<unit id="org.osgi.service.http.whiteboard" version="0.0.0"/>
+<unit id="org.eclipse.equinox.http.service.api" version="0.0.0"/>
+<unit id="org.osgi.service.cm" version="0.0.0"/>
+<unit id="org.osgi.service.component" version="0.0.0"/>
+<unit id="org.osgi.service.device" version="0.0.0"/>
+<unit id="org.osgi.service.event" version="0.0.0"/>
+<unit id="org.osgi.service.metatype" version="0.0.0"/>
+<unit id="org.osgi.service.provisioning" version="0.0.0"/>
+<unit id="org.osgi.service.upnp" version="0.0.0"/>
+<unit id="org.osgi.service.useradmin" version="0.0.0"/>
+<unit id="org.osgi.service.wireadmin" version="0.0.0"/>
+<unit id="org.eclipse.ecf.provider.filetransfer.httpclientjava" version="0.0.0"/>
 <repository id="eclipse_repository" location="https://download.eclipse.org/releases/2025-12/"/>
 </location>
 
@@ -24,7 +41,14 @@
 <repository location="https://download.eclipse.org/cbi/updates/license/2.0.2.v20181016-2210"/>
 </location>
 
-<!-- LSP4J 0.24 — та же версия, что поставляется в рантайме EDT 2026.1
+<!-- LIBS: commons.codec требует com._1c.v8.platform.services (в репозитории EDT 2026.2
+     подходящей версии нет), как в таргете EDT-MCP -->
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.apache.commons.codec" version="1.6.0.v201305230611"/>
+<repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20211213173813/repository/"/>
+</location>
+
+<!-- LSP4J 0.24 — та же версия, что поставляется в рантайме EDT 2026.x
      (org.eclipse.lsp4j_0.24.0.v20250131-1745). API Diagnostic.getMessage()
      здесь возвращает String; LSP4J 1.0.0 несовместим и в EDT не входит. -->
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
