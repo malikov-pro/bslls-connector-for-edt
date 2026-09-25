@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
+import com.github.malikovpro.dt.bsl.lsconnector.check.LsIssueCleaner;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLLanguageClient;
 import com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage;
@@ -31,6 +32,8 @@ public class LSService {
     private BSLConnector connector;
     /** Защёлка неудачного старта: после отказа не поднимаем LS заново на каждом модуле. */
     private volatile boolean startupFailed;
+    /** Замечания уже сняты в текущий «выключенный» период — очистка не повторяется на каждом модуле. */
+    private volatile boolean clearedWhileDisabled;
 
     public BSLConnector getConnector() {
 	return connector;
@@ -61,9 +64,13 @@ public class LSService {
 	    return;
 	}
 	// Плагин выключен в настройках: процесс не запускаем и отказ не фиксируем.
-	// Без fireChanged(): ensureStarted() зовётся на каждый модуль — статус
-	// обновляется в stop() при выключении, здесь уведомлять нечего.
+	// Уже опубликованные замечания снимаем — один раз за «выключенный» период
+	// (ensureStarted() зовётся на каждый модуль, повторять очистку нельзя).
 	if (!plugin.isEnabled()) {
+	    if (!clearedWhileDisabled) {
+		clearedWhileDisabled = true;
+		LsIssueCleaner.clearAsync();
+	    }
 	    return;
 	}
 	createProcess();
@@ -99,8 +106,10 @@ public class LSService {
 	    }
 	}
 	clear();
-	// Явный stop (настройки/рестарт) снимает защёлку отказа — следующая попытка разрешена.
+	// Явный stop (настройки/рестарт) снимает защёлку отказа — следующая попытка разрешена,
+	// а «выключенный» период начат заново: при выключении замечания сняты повторно.
 	startupFailed = false;
+	clearedWhileDisabled = false;
 	plugin.getStatusService().fireChanged();
     }
 
