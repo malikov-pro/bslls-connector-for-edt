@@ -235,12 +235,15 @@ public class LSService {
      * sendErrors=never — запрос Sentry «спросить пользователя» блокирует поток
      * диагностики без таймаута (issue #14); configurationRoot единственного
      * проекта воркспейса — без него LS не знает типы модулей (issue #4).
+     * computeTrigger намеренно НЕ задаётся: onSave заставляет LS отдавать
+     * устаревшие диагностики на pull-запросы, из-за чего ломались «Подавить»
+     * и замечания по несохранённым модулям. Дефолт LS — пересчёт на изменения.
      * Файл перезаписывается только при изменении содержимого.
      */
     private synchronized Path generateConfiguration() throws IOException {
 	var srcRoots = findProjectSrcRoots();
 	var json = new StringBuilder();
-	json.append("{\n    \"sendErrors\": \"never\",\n    \"computeTrigger\": \"onSave\"");
+	json.append("{\n    \"sendErrors\": \"never\"");
 	if (srcRoots.size() == 1) {
 	    var root = srcRoots.get(0).toAbsolutePath().toString().replace("\\", "\\\\");
 	    json.append(",\n    \"configurationRoot\": \"").append(root).append("\"");
