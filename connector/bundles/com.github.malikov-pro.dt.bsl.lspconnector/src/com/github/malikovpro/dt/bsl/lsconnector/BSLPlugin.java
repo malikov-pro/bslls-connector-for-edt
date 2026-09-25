@@ -148,9 +148,9 @@ public class BSLPlugin extends Plugin {
 
     @Override
     public void start(BundleContext bundleContext) throws Exception {
-	plugin = this;
+	setInstance(this);
 	super.start(bundleContext);
-	BSLPlugin.context = bundleContext;
+	setContext(bundleContext);
 
 	initialize();
 	startServices();
@@ -170,7 +170,7 @@ public class BSLPlugin extends Plugin {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
 	stopLS();
-	plugin = null;
+	setInstance(null);
 
 	if (PlatformUI.isWorkbenchRunning()) {
 	    for (var window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
@@ -181,9 +181,20 @@ public class BSLPlugin extends Plugin {
 	super.stop(bundleContext);
     }
 
+    /** Записи в static-поля — только из static-контекста (java:S2696): активатор OSGi — синглтон. */
+    private static void setInstance(BSLPlugin instance) {
+	plugin = instance;
+    }
+
+    private static void setContext(BundleContext bundleContext) {
+	context = bundleContext;
+    }
+
     public void sleepCurrentThread(long value) {
 	try {
 	    Thread.sleep(value);
+	} catch (InterruptedException e) {
+	    Thread.currentThread().interrupt();
 	} catch (Exception e) {
 	    logWarning(e.getMessage());
 	}

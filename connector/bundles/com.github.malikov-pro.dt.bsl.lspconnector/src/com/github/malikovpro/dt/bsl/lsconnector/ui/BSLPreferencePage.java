@@ -396,6 +396,10 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 			message = "Не удалось определить версию («" + summary + "»). Для BSL LS 1.x нужна Java "
 				+ LsVersionProbe.REQUIRED_JAVA_MAJOR + "+.";
 		    }
+		} catch (InterruptedException e) {
+		    Thread.currentThread().interrupt();
+		    colorId = SWT.COLOR_DARK_GRAY;
+		    message = "Проверка прервана.";
 		} catch (Exception e) {
 		    colorId = SWT.COLOR_DARK_RED;
 		    message = "Не удалось выполнить «" + command + "»: " + e.getMessage()
@@ -432,6 +436,9 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 		try {
 		    var version = LsVersionProbe.languageServerVersion(artifact, jar, command, opts);
 		    text = "Версия LS: " + (version.isEmpty() ? artifact.getFileName() : version);
+		} catch (InterruptedException e) {
+		    Thread.currentThread().interrupt();
+		    text = "Проверка версии прервана.";
 		} catch (Exception e) {
 		    text = "Дистрибутив найден, но не удалось выполнить version: " + e.getMessage();
 		}

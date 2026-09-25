@@ -9,7 +9,11 @@ import java.util.regex.Pattern;
 
 public final class LsVersionProbe {
     private static final Pattern JAVA_VERSION = Pattern.compile("version\\s+\"(\\d+)(?:\\.(\\d+))?");
-    private static final Pattern LS_VERSION = Pattern.compile("v?\\d+\\.\\d+(?:\\.\\d+)?(?:-[A-Za-z0-9.]+)?");
+    // Числовое ядро версии (major.minor[.patch]) — без пересекающихся классов,
+    // поэтому без суперлинейного бэктрекинга (java:S8786). Суффикс релиза
+    // ("-rc.3") добирается вручную в findVersionToken — без экзотических
+    // квантификаторов (java:S5856).
+    private static final Pattern VERSION_CORE = Pattern.compile("v?\\d+\\.\\d+(?:\\.\\d+)?");
     public static final int REQUIRED_JAVA_MAJOR = 21;
 
     private LsVersionProbe() {
@@ -57,15 +61,33 @@ public final class LsVersionProbe {
 	    if (line.isEmpty() || isJvmNoise(line)) {
 		continue;
 	    }
-	    var matcher = LS_VERSION.matcher(line);
-	    if (matcher.find()) {
-		return matcher.group();
+	    var version = findVersionToken(line);
+	    if (version != null) {
+		return version;
 	    }
 	    if (fallback.isEmpty()) {
 		fallback = line;
 	    }
 	}
 	return fallback;
+    }
+
+    /** Первый токен версии в строке: числовое ядро + суффикс релиза ("-rc.3"). */
+    private static String findVersionToken(String line) {
+	var matcher = VERSION_CORE.matcher(line);
+	if (!matcher.find()) {
+	    return null;
+	}
+	int end = matcher.end();
+	while (end < line.length()) {
+	    var ch = line.charAt(end);
+	    if (Character.isLetterOrDigit(ch) || ch == '.' || ch == '-') {
+		end++;
+	    } else {
+		break;
+	    }
+	}
+	return line.substring(matcher.start(), end);
     }
 
     public static String firstLine(String text) {

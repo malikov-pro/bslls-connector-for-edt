@@ -172,27 +172,30 @@ public class BSLConnector {
     
     public void runFutureTask(Runnable runnable, int timeoutInSeconds) {
 	var threadpool = Executors.newCachedThreadPool();
-	var futureTask = threadpool.submit(runnable);
 	try {
-	    futureTask.get(timeoutInSeconds, TimeUnit.SECONDS);
-	    } catch (Exception e){
+	    var futureTask = threadpool.submit(runnable);
+	    try {
+		futureTask.get(timeoutInSeconds, TimeUnit.SECONDS);
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+		futureTask.cancel(true);
+	    } catch (Exception e) {
 		BSLPlugin.logError("Ошибка LSP-запроса", e);
 		futureTask.cancel(true);
 	    }
-	threadpool.shutdown();
+	} finally {
+	    threadpool.shutdown();
+	}
     }
 
     private void start() {
 	var future = launcher.startListening();
-	while (true) {
-	    try {
-		future.get();
-		return;
-	    } catch (InterruptedException e) {
-		BSLPlugin.logError(e.getMessage(), e);
-	    } catch (ExecutionException e) {
-		BSLPlugin.logError(e.getMessage(), e);
-	    }
+	try {
+	    future.get();
+	} catch (InterruptedException e) {
+	    Thread.currentThread().interrupt();
+	} catch (ExecutionException e) {
+	    BSLPlugin.logError(e.getMessage(), e);
 	}
     }
 }
