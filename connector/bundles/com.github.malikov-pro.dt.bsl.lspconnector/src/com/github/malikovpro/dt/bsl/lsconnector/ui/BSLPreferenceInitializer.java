@@ -19,6 +19,7 @@ public class BSLPreferenceInitializer extends AbstractPreferenceInitializer {
 	node.put(BSLPreferencePage.PATH_TO_JAVA, "java");
 	node.put(BSLPreferencePage.JAVA_OPTS, "");
 	node.putBoolean(BSLPreferencePage.DEBUG, false);
+	node.putBoolean(BSLPreferencePage.ENABLED, true);
 	node.put(BSLPreferencePage.INIT_TIMEOUT_SECONDS,
 		String.valueOf(BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS));
     }

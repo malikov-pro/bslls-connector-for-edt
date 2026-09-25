@@ -174,13 +174,27 @@ public class LsStatusContribution extends WorkbenchWindowControlContribution {
 	    return "Коннектор BSL LS";
 	}
 	var mode = modeLabel(service.getLaunchMode());
-	var state = busy ? "проверка" : running ? "запущен" : "не запущен";
+	var state = stateLabel(service, running, busy);
 	var text = "Коннектор BSL LS · " + mode + " · " + state;
 	var check = service.getLastCheck();
 	if (check != null) {
 	    text += "\n" + check.menuText();
 	}
 	return text;
+    }
+
+    private static String stateLabel(LsStatusService service, boolean running, boolean busy) {
+	if (busy) {
+	    return "проверка";
+	}
+	if (running) {
+	    return "запущен";
+	}
+	var plugin = BSLPlugin.getPlugin();
+	if (plugin != null && !plugin.isEnabled()) {
+	    return "отключён в настройках";
+	}
+	return "не запущен";
     }
 
     private static String modeLabel(LaunchMode mode) {

@@ -60,6 +60,12 @@ public class LSService {
 	if (isLaunched()) {
 	    return;
 	}
+	// Плагин выключен в настройках: процесс не запускаем и отказ не фиксируем.
+	// Без fireChanged(): ensureStarted() зовётся на каждый модуль — статус
+	// обновляется в stop() при выключении, здесь уведомлять нечего.
+	if (!plugin.isEnabled()) {
+	    return;
+	}
 	createProcess();
 	connectToProcess();
 	if (isLaunched()) {

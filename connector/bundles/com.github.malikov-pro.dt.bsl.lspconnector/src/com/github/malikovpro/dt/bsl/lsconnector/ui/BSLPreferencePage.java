@@ -40,12 +40,14 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String PATH_TO_JAVA = "PATH_TO_JAVA";
     public static final String JAVA_OPTS = "JAVA_OPTS";
     public static final String DEBUG = "DEBUG";
+    public static final String ENABLED = "ENABLED";
     public static final String INIT_TIMEOUT_SECONDS = "INIT_TIMEOUT_SECONDS";
     /** Таймаут initialize по умолчанию, с. */
     public static final int DEFAULT_INIT_TIMEOUT_SECONDS = 15;
 
     private Button nativeRadio;
     private Button jarRadio;
+    private Button enabledButton;
     private Composite jarComposite;
     private Composite cacheComposite;
     private Text javaCommandText;
@@ -81,6 +83,16 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	var root = new Composite(parent, SWT.NONE);
 	root.setLayout(new GridLayout(1, false));
 	root.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+	enabledButton = new Button(root, SWT.CHECK);
+	enabledButton.setText("Включить плагин");
+	var enabledHint = new Label(root, SWT.WRAP);
+	enabledHint.setText("Снимите флажок, чтобы полностью отключить проверки BSL LS:"
+			+ " процесс не запускается, замечания не создаются."
+			+ " Изменение применяется по «Применить»/«OK».");
+	var enabledHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+	enabledHintData.widthHint = 420;
+	enabledHint.setLayoutData(enabledHintData);
 
 	var modeGroup = new Group(root, SWT.NONE);
 	modeGroup.setText("Режим запуска");
@@ -248,6 +260,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 
     @Override
     protected void performDefaults() {
+	enabledButton.setSelection(true);
 	nativeRadio.setSelection(false);
 	jarRadio.setSelection(true);
 	javaCommandText.setText("java");
@@ -280,6 +293,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private void loadValues() {
 	var store = getPreferenceStore();
 	var mode = LaunchMode.from(store.getString(LAUNCH_MODE));
+	enabledButton.setSelection(store.getBoolean(ENABLED));
 	nativeRadio.setSelection(mode == LaunchMode.NATIVE);
 	jarRadio.setSelection(mode == LaunchMode.JAR);
 	javaCommandText.setText(store.getString(PATH_TO_JAVA));
@@ -303,6 +317,7 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 
     private boolean savePreferences() {
 	var store = getPreferenceStore();
+	store.setValue(ENABLED, enabledButton.getSelection());
 	store.setValue(LAUNCH_MODE, selectedMode().getId());
 	store.setValue(PATH_TO_JAVA, javaCommandText.getText().trim());
 	store.setValue(JAVA_OPTS, javaOptsText.getText().trim());
