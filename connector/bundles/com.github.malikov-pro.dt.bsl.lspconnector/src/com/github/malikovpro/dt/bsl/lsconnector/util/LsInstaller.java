@@ -27,8 +27,11 @@ public final class LsInstaller {
 	    throw new IOException("В релизе " + release.getTag() + " нет файла " + release.assetFileName(mode));
 	}
 
+	// Временный файл — в рабочей папке плагина, а не в системном temp:
+	// не даём публично-доступному каталогу (java:S5443) и сохраняем
+	// атомарность Files.move (тот же том, что и слот установки).
 	var progress = SubMonitor.convert(monitor, "Загрузка BSL Language Server " + release.getTag(), 100);
-	var tmp = Files.createTempFile("bsl-ls-", ".download");
+	var tmp = Files.createTempFile(appDir, "bsl-ls-", ".download");
 	try {
 	    download(URI.create(release.assetUrl(mode)), tmp, progress.split(80));
 	    progress.setTaskName("Установка " + release.getTag());

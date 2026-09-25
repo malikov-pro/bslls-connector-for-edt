@@ -51,10 +51,12 @@ public final class BSLCommon {
     }
 
     public static Optional<Path> getConfigurationFileFromWorkspace(Path pathToWorkspace) throws IOException {
-	var listFiles = Files.walk(pathToWorkspace).filter(Files::isRegularFile)
-		.filter(path -> path.endsWith(".bsl-language-server.json")).collect(Collectors.toList());
-	if (!listFiles.isEmpty()) {
-	    return Optional.of(listFiles.get(0));
+	try (var walk = Files.walk(pathToWorkspace)) {
+	    var listFiles = walk.filter(Files::isRegularFile)
+		    .filter(path -> path.endsWith(".bsl-language-server.json")).collect(Collectors.toList());
+	    if (!listFiles.isEmpty()) {
+		return Optional.of(listFiles.get(0));
+	    }
 	}
 	return Optional.empty();
     }

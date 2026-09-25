@@ -9,7 +9,10 @@ import java.util.regex.Pattern;
 
 public final class LsVersionProbe {
     private static final Pattern JAVA_VERSION = Pattern.compile("version\\s+\"(\\d+)(?:\\.(\\d+))?");
-    private static final Pattern LS_VERSION = Pattern.compile("v?\\d+\\.\\d+(?:\\.\\d+)?(?:-[A-Za-z0-9.]+)?");
+    // Версионный литерал: possessive-квантификаторы убирают суперлинейный
+    // бэктрекинг (java:S8786) — перечисление [A-Za-z0-9.] пересекается с \d.
+    // Структура прежняя: major.minor[.patch][-суффикс].
+    private static final Pattern LS_VERSION = Pattern.compile("v?\\d++\\.\\d++(?:\\.\\d++)?+(?:-[A-Za-z0-9.]++)?++");
     public static final int REQUIRED_JAVA_MAJOR = 21;
 
     private LsVersionProbe() {
