@@ -170,8 +170,14 @@ public class LSService {
 
 	if (pathToConfiguration.isPresent() && !pathToConfiguration.get().toFile().exists()) {
 	    BSLPlugin.logWarning("Файл конфигурации BSL LS не найден: " + pathToConfiguration.get()
-		    + ". Конфиг (.bsl-language-server.json) ищется автоматически в корне воркспейса"
-		    + " — проверьте, что файл на месте.");
+		    + ". Будет использован сгенерированный конфиг в ~/.bsl-connector-for-edt/generated-config.json.");
+	}
+
+	Path configurationFile = null;
+	try {
+	    configurationFile = resolveConfiguration();
+	} catch (IOException e) {
+	    BSLPlugin.logError("Не удалось подготовить конфигурацию BSL LS", e);
 	}
 
 	List<String> arguments = new ArrayList<>();
@@ -182,9 +188,9 @@ public class LSService {
 	}
 	arguments.add(pathToLSP.get().toString());
 
-	if (pathToConfiguration.isPresent()) {
+	if (configurationFile != null) {
 	    arguments.add("--configuration");
-	    arguments.add(pathToConfiguration.get().toString());
+	    arguments.add(configurationFile.toString());
 	}
 
     // Командная строка запуска — только при включённой настройке «Отладка».
@@ -213,6 +219,57 @@ public class LSService {
 	} catch (InterruptedException e) {
 	    Thread.currentThread().interrupt();
 	}
+    }
+
+    /** Пользовательский конфиг (задан и существует) либо сгенерированный (issue #14, #4). */
+    private Path resolveConfiguration() throws IOException {
+	var user = plugin.getPathToConfiguration();
+	if (user.isPresent() && user.get().toFile().exists()) {
+	    return user.get();
+	}
+	return generateConfiguration();
+    }
+
+    /**
+     * Генерирует ~/.bsl-connector-for-edt/generated-config.json:
+     * sendErrors=never — запрос Sentry «спросить пользователя» блокирует поток
+     * диагностики без таймаута (issue #14); configurationRoot единственного
+     * проекта воркспейса — без него LS не знает типы модулей (issue #4).
+     * computeTrigger намеренно НЕ задаётся: onSave заставляет LS отдавать
+     * устаревшие диагностики на pull-запросы, из-за чего ломались «Подавить»
+     * и замечания по несохранённым модулям. Дефолт LS — пересчёт на изменения.
+     * Файл перезаписывается только при изменении содержимого.
+     */
+    private synchronized Path generateConfiguration() throws IOException {
+	var srcRoots = findProjectSrcRoots();
+	var json = new StringBuilder();
+	json.append("{\n    \"sendErrors\": \"never\"");
+	if (srcRoots.size() == 1) {
+	    var root = srcRoots.get(0).toAbsolutePath().toString().replace("\\", "\\\\");
+	    json.append(",\n    \"configurationRoot\": \"").append(root).append("\"");
+	}
+	json.append("\n}\n");
+	var target = plugin.getAppDir().resolve("generated-config.json");
+	if (!java.nio.file.Files.exists(target)
+		|| !java.nio.file.Files.readString(target).contentEquals(json)) {
+	    java.nio.file.Files.writeString(target, json.toString());
+	}
+	return target;
+    }
+
+    /** Каталоги src доступных проектов воркспейса (для configurationRoot). */
+    private List<Path> findProjectSrcRoots() {
+	var result = new ArrayList<Path>();
+	for (var project : org.eclipse.core.resources.ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+	    if (!project.isAccessible() || project.getLocation() == null) {
+		continue;
+	    }
+	    var src = project.getLocation().append("src").toFile().toPath();
+	    if (java.nio.file.Files.isDirectory(src)) {
+		result.add(src);
+	    }
+	}
+	return result;
     }
 
     private void connectToProcess() {

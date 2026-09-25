@@ -70,6 +70,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	    return;
 	}
 	attachTo(document, editorUri(editor));
+	BSLPlugin.logInfo("Подавление LS: рерайтер прикреплён к " + editorUri(editor));
     }
 
     /**
@@ -184,6 +185,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	    return;
 	}
 	BSLPlugin.debug("Подавление LS: перехвачена вставка EDT «" + event.getText().strip() + "»");
+	BSLPlugin.logInfo("Подавление LS: перехвачена вставка EDT «" + event.getText().strip() + "»");
 	scheduleRegionInsert(event.getOffset(), event.getText(), codes);
     }
 
@@ -261,7 +263,8 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 		connector.textDocumentDidClose(moduleUri);
 	    }
 	}
-	BSLPlugin.debug("Подавление LS: LS не ответил за " + (DIAGNOSTICS_TIMEOUT_MILLIS / 1000) + " с — оберну одну строку");
+	BSLPlugin.logInfo("Подавление LS: LS не ответил за " + (DIAGNOSTICS_TIMEOUT_MILLIS / 1000)
+		+ " с — оберну одну строку");
 	return List.of();
     }
 
@@ -290,10 +293,10 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	    try {
 		for (Region region : regions) {
 		    insertRegion(region);
-		    BSLPlugin.debug("Подавление LS: регион " + region.code + " вставлен вокруг строк "
-			    + (region.startLine0 + 1) + "–" + (region.endLine0 + 1) + " («"
-			    + lineText(region.startLine0).strip() + "»)");
 		}
+		BSLPlugin.logInfo("Подавление LS: вставлено регионов " + regions.size()
+			+ " (" + regions.stream().map(r -> r.code).sorted()
+				.collect(java.util.stream.Collectors.joining(", ")) + ")");
 	    } finally {
 		inserting = false;
 	    }
@@ -325,7 +328,7 @@ public final class LsSkipCheckRewriter implements IDocumentListener {
 	    BSLPlugin.debug("Подавление LS: вставка EDT удалена (строка " + (line + 1) + ")");
 	    return line;
 	}
-	BSLPlugin.debug("Подавление LS: вставка EDT не найдена рядом со строкой " + (hintLine0 + 1));
+	BSLPlugin.logInfo("Подавление LS: вставка EDT не найдена рядом со строкой " + (hintLine0 + 1));
 	return -1;
     }
 
