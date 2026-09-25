@@ -116,6 +116,11 @@ public class BSLPlugin extends Plugin {
 	log(createWarningStatus(message, throwable));
     }
 
+    /** Информационная запись в журнал ошибок — для редких одноразовых событий (очистка, перевалидация). */
+    public static void logInfo(String message) {
+	log(new Status(IStatus.INFO, PLUGIN_ID, 0, message, null));
+    }
+
     public static boolean isDebugEnabled() {
 	var instance = plugin;
 	if (instance == null || instance.preferenceStore == null) {

@@ -35,15 +35,17 @@ public final class LsRevalidation {
 	    @Override
 	    protected IStatus run(IProgressMonitor monitor) {
 		var plugin = BSLPlugin.getPlugin();
-		if (plugin == null || !plugin.getLsService().awaitInitialized()) {
-		    return Status.OK_STATUS; // LS не готов — замечания появятся на следующей волне проверок
+		var ready = plugin != null && plugin.getLsService().awaitInitialized();
+		BSLPlugin.logInfo("Перевалидация BSL LS: LS готов — " + ready);
+		if (!ready) {
+		    return Status.OK_STATUS; // замечания появятся на следующей волне проверок
 		}
-		var scheduler = LsIssueCleaner.awaitScheduler(monitor);
-		if (scheduler == null) {
-		    return Status.OK_STATUS;
-		}
-		var modelManager = service(IBmModelManager.class);
-		if (modelManager == null) {
+		var scheduler = LsIssueCleaner.await(monitor, com.e1c.g5.v8.dt.check.ICheckScheduler.class);
+		var modelManager = await(monitor, IBmModelManager.class);
+		if (scheduler == null || modelManager == null) {
+		    BSLPlugin.logWarning("Перевалидация BSL LS: сервисы EDT недоступны"
+			    + " (ICheckScheduler=" + (scheduler != null)
+			    + ", IBmModelManager=" + (modelManager != null) + ")");
 		    return Status.OK_STATUS;
 		}
 		var ids = LsIssueCleaner.checkIds();
@@ -55,6 +57,8 @@ public final class LsRevalidation {
 			continue;
 		    }
 		    var objectIds = collectTopObjectIds(modelManager.getModel(project));
+		    BSLPlugin.logInfo("Перевалидация BSL LS: " + project.getName()
+			    + " — объектов: " + objectIds.size());
 		    if (!objectIds.isEmpty()) {
 			scheduler.scheduleValidation(project, ids, objectIds, monitor);
 		    }
@@ -86,6 +90,22 @@ public final class LsRevalidation {
 	    }
 	});
 	return ids;
+    }
+
+    private static <T> T await(IProgressMonitor monitor, Class<T> type) {
+	var service = service(type);
+	var waited = 0L;
+	while (service == null && !monitor.isCanceled() && waited < 60_000) {
+	    try {
+		Thread.sleep(2_000);
+	    } catch (InterruptedException e) {
+		Thread.currentThread().interrupt();
+		return null;
+	    }
+	    waited += 2_000;
+	    service = service(type);
+	}
+	return service;
     }
 
     private static <T> T service(Class<T> type) {
