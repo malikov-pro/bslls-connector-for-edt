@@ -43,15 +43,22 @@ public final class LsModuleAnalyzer {
 
     private List<Diagnostic> diagnostics(Module module, String content, IProgressMonitor progressMonitor) {
 	var plugin = BSLPlugin.getPlugin();
-	if (plugin == null || !plugin.getLsService().ensureStarted()) {
+	if (plugin == null) {
+	    return List.of();
+	}
+	// Проект с выключенной категорией «Проверка BSL LS» не будит LS (issue #26).
+	var moduleFile = ResourcesPlugin.getWorkspace().getRoot()
+		.getFile(new Path(EcoreUtil.getURI(module).toPlatformString(true)));
+	if (!LsProjectGate.isEnabledFor(moduleFile.getProject())) {
+	    return List.of();
+	}
+	if (!plugin.getLsService().ensureStarted()) {
 	    return List.of();
 	}
 	var connector = plugin.getLsService().getConnector();
 	if (connector == null) {
 	    return List.of();
 	}
-	var moduleFile = ResourcesPlugin.getWorkspace().getRoot()
-		.getFile(new Path(EcoreUtil.getURI(module).toPlatformString(true)));
 	var uri = BSLCommon.uri(moduleFile.getLocationURI());
 	var key = uri + "\n" + content.hashCode() + "\n" + content.length();
 
