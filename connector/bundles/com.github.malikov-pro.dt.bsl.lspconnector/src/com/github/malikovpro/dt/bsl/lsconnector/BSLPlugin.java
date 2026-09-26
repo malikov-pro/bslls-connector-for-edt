@@ -18,6 +18,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.BundleContext;
 
+import com.github.malikovpro.dt.bsl.lsconnector.check.LsProjectGate;
 import com.github.malikovpro.dt.bsl.lsconnector.listener.WindowEventListener;
 import com.github.malikovpro.dt.bsl.lsconnector.service.LSService;
 import com.github.malikovpro.dt.bsl.lsconnector.service.LsStatusService;
