@@ -18,6 +18,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.BundleContext;
 
+import com.github.malikovpro.dt.bsl.lsconnector.check.LsProjectGate;
 import com.github.malikovpro.dt.bsl.lsconnector.listener.WindowEventListener;
 import com.github.malikovpro.dt.bsl.lsconnector.service.LSService;
 import com.github.malikovpro.dt.bsl.lsconnector.service.LsStatusService;
@@ -159,7 +160,11 @@ public class BSLPlugin extends Plugin {
 	var job = new Job("Запуск BSL LS") {
 	    @Override
 	    protected IStatus run(IProgressMonitor monitor) {
-		startLS();
+		// Стартуем только если хоть в одном проекте включены проверки BSL LS (issue #26);
+		// иначе LS поднимется лениво через ensureStarted при первой реальной нужде.
+		if (LsProjectGate.anyEnabled()) {
+		    startLS();
+		}
 		return Status.OK_STATUS;
 	    }
 	};
