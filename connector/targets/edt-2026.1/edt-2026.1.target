@@ -32,7 +32,7 @@
 <unit id="org.eclipse.lsp4j.sdk.feature.group" version="0.0.0"/>
 </location>
 
-<!-- 1C-syntax utils -->
+<!-- 1C-syntax utils (Bundle-Version = версии Maven-зависимости, менять синхронно) -->
 <location includeDependencyDepth="none" includeDependencyScopes="compile" missingManifest="generate" type="Maven">
 <dependencies>
 <dependency>
@@ -45,6 +45,7 @@
 <instructions><![CDATA[
 Bundle-SymbolicName: com.github.1c-syntax.utils
 Bundle-Name: 1C-syntax Utils
+Bundle-Version: 0.6.9
 Export-Package: com.github._1c_syntax.utils
 ]]></instructions>
 </location>
