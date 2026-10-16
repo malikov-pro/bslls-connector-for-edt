@@ -74,6 +74,11 @@ public class BSLPlugin extends Plugin {
     }
 
     public Optional<Path> getPathToConfiguration() {
+	try {
+	    searchConfigurationFile();
+	} catch (IOException e) {
+	    logError(e.getMessage(), e);
+	}
 	return pathToConfiguration;
     }
 
@@ -236,6 +241,7 @@ public class BSLPlugin extends Plugin {
 	preferenceStore.setDefault(BSLPreferencePage.JAVA_OPTS, "");
 	preferenceStore.setDefault(BSLPreferencePage.DEBUG, false);
 	preferenceStore.setDefault(BSLPreferencePage.ENABLED, true);
+	preferenceStore.setDefault(BSLPreferencePage.PRIMARY_PROJECT, "");
 	preferenceStore.setDefault(BSLPreferencePage.INIT_TIMEOUT_SECONDS,
 		String.valueOf(BSLPreferencePage.DEFAULT_INIT_TIMEOUT_SECONDS));
     }
@@ -251,7 +257,8 @@ public class BSLPlugin extends Plugin {
     }
 
     private void searchConfigurationFile() throws IOException {
-	pathToConfiguration = BSLCommon.getConfigurationFileFromWorkspace(pathToWorkspace);
+	var preferred = preferenceStore != null ? preferenceStore.getString(BSLPreferencePage.PRIMARY_PROJECT) : "";
+	pathToConfiguration = BSLCommon.getConfigurationFile(preferred, pathToWorkspace);
     }
 
     private void initAppDir() {

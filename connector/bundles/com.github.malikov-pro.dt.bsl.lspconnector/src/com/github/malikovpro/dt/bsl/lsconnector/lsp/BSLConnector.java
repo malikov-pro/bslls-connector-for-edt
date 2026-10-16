@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.CodeActionCapabilities;
 import org.eclipse.lsp4j.CodeActionKind;
@@ -31,11 +32,13 @@ import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
+import org.eclipse.lsp4j.WorkspaceFolder;
 import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageServer;
 
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
+import com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage;
 import com.github.malikovpro.dt.bsl.lsconnector.util.BSLCommon;
 
 public class BSLConnector {
@@ -90,13 +93,29 @@ public class BSLConnector {
     // setRootUri(String) устарел только в lsp4j 1.0.0; URI-перегрузки в 0.23.1 (EDT 2025.2) нет.
     @SuppressWarnings("deprecation")
     public CompletableFuture<InitializeResult> initialize() {
-	var rootUri = BSLCommon.uri(BSLPlugin.getPlugin().getPathToWorkspace().toUri());
+	var projects = BSLCommon.find1CProjects();
+	var workspaceFolders = new ArrayList<WorkspaceFolder>();
+	var store = BSLPlugin.getPlugin() != null ? BSLPlugin.getPlugin().getPreferenceStore() : null;
+	var selectedProjectName = store != null ? store.getString(BSLPreferencePage.PRIMARY_PROJECT) : "";
+	var primaryProject = BSLCommon.findPrimaryProject(selectedProjectName).orElse(null);
+
+	for (var project : projects) {
+	    var uri = BSLCommon.uri(project.getLocation().toFile().toURI());
+	    workspaceFolders.add(new WorkspaceFolder(uri.toString(), project.getName()));
+	}
+
+	var rootUri = primaryProject != null
+		? BSLCommon.uri(primaryProject.getLocation().toFile().toURI())
+		: BSLCommon.uri(BSLPlugin.getPlugin().getPathToWorkspace().toUri());
 
 	var params = new InitializeParams();
 	params.setProcessId((int) ProcessHandle.current().pid());
 	// LSP trace: подробный только при включённой отладке
 	params.setTrace(BSLPlugin.isDebugEnabled() ? TRACE_VERBOSE : TRACE_OFF);
 	params.setRootUri(rootUri.toString());
+	if (!workspaceFolders.isEmpty()) {
+	    params.setWorkspaceFolders(workspaceFolders);
+	}
 
 	var serverCapabilities = new ClientCapabilities();
 	var textDocument = new TextDocumentClientCapabilities();

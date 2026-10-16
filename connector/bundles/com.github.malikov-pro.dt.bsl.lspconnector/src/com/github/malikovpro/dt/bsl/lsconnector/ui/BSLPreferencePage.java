@@ -28,6 +28,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.github.malikovpro.dt.bsl.lsconnector.BSLPlugin;
+import com.github.malikovpro.dt.bsl.lsconnector.util.BSLCommon;
 import com.github.malikovpro.dt.bsl.lsconnector.util.GitHubRelease;
 import com.github.malikovpro.dt.bsl.lsconnector.util.GitHubReleases;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LaunchMode;
@@ -41,6 +42,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     public static final String JAVA_OPTS = "JAVA_OPTS";
     public static final String DEBUG = "DEBUG";
     public static final String ENABLED = "ENABLED";
+    public static final String PRIMARY_PROJECT = "PRIMARY_PROJECT";
+    public static final String AUTO_PROJECT = "(Авто)";
     public static final String INIT_TIMEOUT_SECONDS = "INIT_TIMEOUT_SECONDS";
     /** Таймаут initialize по умолчанию, с. */
     public static final int DEFAULT_INIT_TIMEOUT_SECONDS = 60;
@@ -48,6 +51,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private Button nativeRadio;
     private Button jarRadio;
     private Button enabledButton;
+    private Combo projectCombo;
+    private Label configFileLabel;
     private Composite jarComposite;
     private Composite cacheComposite;
     private Text javaCommandText;
@@ -93,6 +98,34 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	var enabledHintData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 	enabledHintData.widthHint = 420;
 	enabledHint.setLayoutData(enabledHintData);
+
+	var projectGroup = new Group(root, SWT.NONE);
+	projectGroup.setText("Основной проект конфигурации");
+	projectGroup.setLayout(new GridLayout(2, false));
+	projectGroup.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+	createLabel(projectGroup, "Проект:");
+	projectCombo = new Combo(projectGroup, SWT.READ_ONLY);
+	projectCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+	projectCombo.addSelectionListener(new SelectionAdapter() {
+	    @Override
+	    public void widgetSelected(SelectionEvent e) {
+		updateConfigFileDisplay();
+	    }
+	});
+
+	createLabel(projectGroup, "Конфиг BSL LS:");
+	configFileLabel = new Label(projectGroup, SWT.WRAP);
+	var configData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+	configData.widthHint = 420;
+	configFileLabel.setLayoutData(configData);
+
+	var projectHint = new Label(projectGroup, SWT.WRAP);
+	projectHint.setText("Основной проект конфигурации для вычисления configurationRoot и корня рабочей области."
+			+ " «(Авто)» определяет проект конфигурации автоматически по наличию Configuration.mdo.");
+	var projectHintData = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
+	projectHintData.widthHint = 420;
+	projectHint.setLayoutData(projectHintData);
 
 	var modeGroup = new Group(root, SWT.NONE);
 	modeGroup.setText("Режим запуска");
@@ -261,6 +294,10 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     @Override
     protected void performDefaults() {
 	enabledButton.setSelection(true);
+	if (projectCombo != null && !projectCombo.isDisposed()) {
+	    projectCombo.select(0);
+	    updateConfigFileDisplay();
+	}
 	nativeRadio.setSelection(false);
 	jarRadio.setSelection(true);
 	javaCommandText.setText("java");
@@ -294,12 +331,49 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
 	var store = getPreferenceStore();
 	var mode = LaunchMode.from(store.getString(LAUNCH_MODE));
 	enabledButton.setSelection(store.getBoolean(ENABLED));
+	loadProjects(store.getString(PRIMARY_PROJECT));
 	nativeRadio.setSelection(mode == LaunchMode.NATIVE);
 	jarRadio.setSelection(mode == LaunchMode.JAR);
 	javaCommandText.setText(store.getString(PATH_TO_JAVA));
 	javaOptsText.setText(store.getString(JAVA_OPTS));
 	timeoutSpinner.setSelection(initTimeoutFromStore());
 	debugButton.setSelection(store.getBoolean(DEBUG));
+    }
+
+    private void loadProjects(String selectedProject) {
+	if (projectCombo == null || projectCombo.isDisposed()) {
+	    return;
+	}
+	projectCombo.removeAll();
+	projectCombo.add(AUTO_PROJECT);
+	var selectIndex = 0;
+	var projects = BSLCommon.find1CProjects();
+	for (var i = 0; i < projects.size(); i++) {
+	    var name = projects.get(i).getName();
+	    projectCombo.add(name);
+	    if (name.equals(selectedProject)) {
+		selectIndex = i + 1;
+	    }
+	}
+	projectCombo.select(selectIndex);
+	updateConfigFileDisplay();
+    }
+
+    private void updateConfigFileDisplay() {
+	if (configFileLabel == null || configFileLabel.isDisposed()) {
+	    return;
+	}
+	var index = projectCombo != null ? projectCombo.getSelectionIndex() : 0;
+	var preferred = index > 0 ? projectCombo.getItem(index) : "";
+	var ws = BSLPlugin.getPlugin() != null ? BSLPlugin.getPlugin().getPathToWorkspace() : null;
+	var config = BSLCommon.getConfigurationFile(preferred, ws);
+	if (config.isPresent()) {
+	    configFileLabel.setText(config.get().toString());
+	    configFileLabel.setToolTipText(config.get().toString());
+	} else {
+	    configFileLabel.setText("не найден (будет сгенерирован)");
+	    configFileLabel.setToolTipText("");
+	}
     }
 
     /** Читает таймаут initialize из хранилища; мусор и нуль/отрицательные дают умолчание. */
@@ -318,6 +392,8 @@ public class BSLPreferencePage extends PreferencePage implements IWorkbenchPrefe
     private boolean savePreferences() {
 	var store = getPreferenceStore();
 	store.setValue(ENABLED, enabledButton.getSelection());
+	var projectIndex = projectCombo != null ? projectCombo.getSelectionIndex() : 0;
+	store.setValue(PRIMARY_PROJECT, projectIndex > 0 ? projectCombo.getItem(projectIndex) : "");
 	store.setValue(LAUNCH_MODE, selectedMode().getId());
 	store.setValue(PATH_TO_JAVA, javaCommandText.getText().trim());
 	store.setValue(JAVA_OPTS, javaOptsText.getText().trim());

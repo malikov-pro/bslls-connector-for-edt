@@ -22,6 +22,7 @@ import com.github.malikovpro.dt.bsl.lsconnector.check.LsRevalidation;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLConnector;
 import com.github.malikovpro.dt.bsl.lsconnector.lsp.BSLLanguageClient;
 import com.github.malikovpro.dt.bsl.lsconnector.ui.BSLPreferencePage;
+import com.github.malikovpro.dt.bsl.lsconnector.util.BSLCommon;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LaunchMode;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LsCache;
 import com.github.malikovpro.dt.bsl.lsconnector.util.LsVersionProbe;
@@ -241,11 +242,11 @@ public class LSService {
      * Файл перезаписывается только при изменении содержимого.
      */
     private synchronized Path generateConfiguration() throws IOException {
-	var srcRoots = findProjectSrcRoots();
+	var primaryConfigRoot = findPrimaryConfigurationRoot();
 	var json = new StringBuilder();
 	json.append("{\n    \"sendErrors\": \"never\"");
-	if (srcRoots.size() == 1) {
-	    var root = srcRoots.get(0).toAbsolutePath().toString().replace("\\", "\\\\");
+	if (primaryConfigRoot.isPresent()) {
+	    var root = primaryConfigRoot.get().toAbsolutePath().toString().replace("\\", "\\\\");
 	    json.append(",\n    \"configurationRoot\": \"").append(root).append("\"");
 	}
 	json.append("\n}\n");
@@ -257,19 +258,16 @@ public class LSService {
 	return target;
     }
 
-    /** Каталоги src доступных проектов воркспейса (для configurationRoot). */
-    private List<Path> findProjectSrcRoots() {
-	var result = new ArrayList<Path>();
-	for (var project : org.eclipse.core.resources.ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
-	    if (!project.isAccessible() || project.getLocation() == null) {
-		continue;
-	    }
-	    var src = project.getLocation().append("src").toFile().toPath();
-	    if (java.nio.file.Files.isDirectory(src)) {
-		result.add(src);
-	    }
-	}
-	return result;
+    /**
+     * Находит корень исходников (src) основной конфигурации воркспейса.
+     * Использует выбранный в настройках проект либо автоопределение по Configuration.mdo.
+     */
+    private Optional<Path> findPrimaryConfigurationRoot() {
+	var selectedProjectName = preferenceStore != null
+		? preferenceStore.getString(BSLPreferencePage.PRIMARY_PROJECT)
+		: "";
+	return BSLCommon.findPrimaryProject(selectedProjectName)
+		.map(project -> project.getLocation().append("src").toFile().toPath());
     }
 
     private void connectToProcess() {
